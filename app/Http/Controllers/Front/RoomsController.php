@@ -1,5 +1,6 @@
 <?php
 namespace App\Http\Controllers\Front;
+use Exception;
 use App\Models\Front\PaymentGateway;
 use App\Models\Front\SubscribeList;
 use Illuminate\Http\Request;
@@ -285,8 +286,7 @@ class RoomsController extends Controller
 		$rooms_description->save(); // Store data to rooms_description table
 		return array(
 			'status' => 'success',
-			'room_id' => $rooms->id,
-			'redirect_url' => 'manage-listing/'.$rooms->id.'/basics'
+			'room_id' => $rooms->id
 		);
 	}
 	public function get_additional_charges(Request $request){
@@ -356,15 +356,15 @@ class RoomsController extends Controller
 
 		$data['room_id']        = $request->id;
 		$data['room_step']      = $request->page;    // It will get correct view file based on page name
-
+		
 		$data['result']         = Rooms::check_user($request->id); // Check Room Id and User Id is correct or not
 		
 		$data['rooms_price'] = $data['result']->rooms_price;
-
+		
 		$data['rooms_price']['additional_charge'] = $data['result']->rooms_price ? $data['result']->rooms_price->additional_charge : '';
 		$data['currencies'] 	= Currency::all();
 		$data['rooms_status']   = RoomsStepsStatus::where('room_id',$request->id)->first();
-
+		
 		// return $data;
 		$data['imported_ical']  = ImportedIcal::where('room_id',$request->id)->get();
 
@@ -377,7 +377,6 @@ class RoomsController extends Controller
 		$data['not_available_days'] = Calendar::where([['room_id',$request->id], ['status', '=', 'Not available']])->groupBy('seasonal_name')->get();
 		$data['bathrooms']=RoomsBath::where('room_id',$request->id)->get();
 		$data['bedrooms']=RoomsBed::where('room_id',$request->id)->get();
-
 		return response()->json($data);
 		// return $data;
 	}
@@ -437,20 +436,27 @@ class RoomsController extends Controller
 	}
 	public function update_rooms(Request $request )
 	{
+
 		$data  = $request;
 		$data  = json_decode($data['data']); // AngularJS data decoding
 
+
 		if($request->current_tab)
 		{
+
 			if($request->current_tab == 'en')
 			{
 				$rooms = Rooms::find($request->id); // Where condition for Update
 			}
 			else
 			{
+
 				$des_id = RoomsDescriptionLang::where('room_id', $request->id)->where('lang_code', $request->current_tab)->first()->id;
+
 				$rooms = RoomsDescriptionLang::find($des_id);
+
 			}
+
 		}
 		else
 		{
@@ -458,6 +464,7 @@ class RoomsController extends Controller
 		}
 
 		$email = '';
+		
 		foreach($data as $key=>$value)
 		{
 			if($key != 'video')
@@ -475,6 +482,7 @@ class RoomsController extends Controller
 					return json_encode(['success'=>'false', 'steps_count' => $rooms->steps_count]);
 				}
 			}
+
 			if($key == 'booking_type')
 				$rooms->$key = (!empty($value)) ? $value : NULL;
 
@@ -485,6 +493,7 @@ class RoomsController extends Controller
 				$email = 'Listed';
 
 			}
+
 			if($key == 'status' && $value == 'Unlisted'){
 				$email = 'Unlisted';
 				$rooms->recommended='No';
@@ -493,6 +502,7 @@ class RoomsController extends Controller
 		}
 
 		$rooms->save(); // Save rooms data to rooms table
+
 
 		if($email == 'Listed' && $rooms->approved_status != "1") {
 		}
@@ -542,9 +552,9 @@ class RoomsController extends Controller
 	{
 		// echo $id;exit;
 		$result_rooms = Rooms::whereId($id)->first();
-		
+
 		$rooms_status = RoomsStepsStatus::find($id);
-		
+	 
 		if(!$rooms_status){
 			$rooms_status = new RoomsStepsStatus;
 			$rooms_status->room_id = $id;
@@ -887,6 +897,7 @@ class RoomsController extends Controller
 	public function add_photos(Request $request )
 	{
 		$room = Rooms::find($request->id);
+		// dd($room);
 		$uploaded = RoomsPhotos::where('room_id',$request->id)->first();
 		if($uploaded)
 			$photos_count = $uploaded->photos_count;
@@ -902,9 +913,10 @@ class RoomsController extends Controller
 			// dd($_FILES);
 			$processes_per_img = 5;
 			$progress_step = 1 / ($total_cnt_to_upload * $processes_per_img);
-			// session()->put('upload_progress_step', $progress_step);
+			session()->put('upload_progress_step', $progress_step);
 			$progress = 0;
-			// session()->put('upload_progress', $progress);
+			session()->put('upload_progress', $progress);
+
 
 			$file_names = array();
 
@@ -919,18 +931,26 @@ class RoomsController extends Controller
 					$photos_count = 0;
 
 				$tmp_name = $_FILES["photos"]["tmp_name"][$key];
+				// dd($_FILES);
+
 				$name = str_replace(' ', '_', $_FILES["photos"]["name"][$key]);
+
 				$size = $_FILES["photos"]["size"][$key];
+
+
 				$ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+
+
 				$name = time() . '_' . random_int( 100, 999) . $key;// . '_.' . $ext;
+
 				$filename = dirname($_SERVER['SCRIPT_FILENAME']).'/images/rooms/'.$request->id;
+
 				if(!file_exists($filename))
 				{
 					if ( ! mkdir( dirname( $_SERVER['SCRIPT_FILENAME'] ) . '/images/rooms/' . $request->id, 0777, true ) && ! is_dir( dirname( $_SERVER['SCRIPT_FILENAME'] ) . '/images/rooms/' . $request->id ) ) {
 						throw new \RuntimeException( sprintf( 'Directory "%s" was not created', dirname( $_SERVER['SCRIPT_FILENAME'] ) . '/images/rooms/' . $request->id ) );
 					}
 				}
-
 				$max_limit_of_img_size = 10;     // 7 Mbyte
 				if($size > $max_limit_of_img_size * 1024 * 1024) {       // restrict file size to 7 Mb
 					$rows['error'] = array('error_title' => ' Photo Error', 'error_description' => trans('messages.lys.filesize_exceed_error', ['max_limit' => $max_limit_of_img_size]));
@@ -938,7 +958,6 @@ class RoomsController extends Controller
 					$rows['succresult'] = $result;
 					return json_encode($rows);
 				}
-				
 				if($ext == 'png' || $ext == 'jpg' || $ext == 'jpeg' || $ext == 'gif')
 				{
 					$image_name =$tmp_name;;
@@ -949,31 +968,34 @@ class RoomsController extends Controller
 						"flags"=>"lossy",
 						"resource_type"=>"image"
 					);
-					
+
 					Cloudder::upload($tmp_name, null, $option1);
+					
 					if(Cloudder::getResult()){
 						array_push($file_names, $name);
 						$photos          = new RoomsPhotos;
 						$photos->room_id = $request->id;
 						$photos->name    = $name;
 						$photos->storage = 'cloud';
+
 						$photos->save();
 					}
-					
 					// sleep(2);
-					$res = $this->update_status($request->id);
+					$this->update_status($request->id);
 				}
 				else
 				{
 					$err = array('error_title' => ' Photo Error', 'error_description' => 'This is not an image file');
+
 				}
 			}
-			
+
 			$result = RoomsPhotos::where('room_id',$request->id)->orderBy('order','desc')->get();
 			$rows['succresult'] = $result;
 			$rows['error'] = $err;
 			return json_encode($rows);
 		}
+
 	}
 	public static function process_image($id, $file_names)
 	{
@@ -1608,8 +1630,8 @@ class RoomsController extends Controller
 	}
 	public function update_price(Request $request)
 	{
-		$data           = $request;
-		$data           = json_decode($data['data']); // AngularJS data decoding
+		$data           = $request->input('data');
+
 		foreach ($data as $key => $value)
 		{
 			if($key == 'currency_code') {
@@ -1680,8 +1702,8 @@ class RoomsController extends Controller
 			$price = new RoomsPrice;
 			
 			$price->currency_code = isset($data->currency_code) ? $data->currency_code : 'USD';
-			// $price->save();
 		}
+		
 		$price->room_id = $request->id;
 		foreach ($data as $key => $value)
 		{

@@ -419,52 +419,25 @@ class RoomsPrice extends Model
 	 * @return float
 	 */
 	public function currency_calc($field)
-    {  //get currenct url
-      $route=@Route::getCurrentRoute();
-      
-      /*if($route)
-      {
-        $api_url = @$route->getPath();
-      }
-      else
-      {
-        $api_url = '';
-      }
-          $url_array=explode('/',$api_url);
-            //Api currency conversion
-          if(@$url_array['0']=='api')*/
-          if(request()->segment(1) == 'api')
-          { 
-            $user_details = JWTAuth::parseToken()->authenticate(); 
-            
+    {
+        // if(request()->segment(1) == 'api')
+        // { 
+        //     // $user_details = JWTAuth::parseToken()->authenticate(); 
+        //     // $rate = Currency::whereCode($this->attributes['currency_code'])->first()->rate;
+        //     // $usd_amount = $this->attributes[$field] / $rate;
+        //     // $api_currency = $user_details->currency_code; 
+        //     // $default_currency = Currency::where('default_currency',1)->first()->code;
+        //     // $session_rate = Currency::whereCode($user_details->currency_code!=null?$user_details->currency_code :$default_currency)->first()->rate;
+        //     // return round($usd_amount * $session_rate);
+        //  }
+        //  else
+        //  {
             $rate = Currency::whereCode($this->attributes['currency_code'])->first()->rate;
-
             $usd_amount = $this->attributes[$field] / $rate;
-
-            $api_currency = $user_details->currency_code; 
-
             $default_currency = Currency::where('default_currency',1)->first()->code;
-
-            $session_rate = Currency::whereCode($user_details->currency_code!=null?$user_details->currency_code :$default_currency)->first()->rate;
-
-               return round($usd_amount * $session_rate);
-
-         }
-         else
-         {
-        $rate = Currency::whereCode($this->attributes['currency_code'])->first()->rate;
-
-        $usd_amount = $this->attributes[$field] / $rate;
-
-        $default_currency = Currency::where('default_currency',1)->first()->code;
-
-        $session_rate = Currency::whereCode($default_currency)->first()->rate;
-
-        //todo-vr add option to allow admins and users to enable/disable currency conversion based on user's ip address
-        // $session_rate = Currency::whereCode((Session::get('currency')) ? Session::get('currency') : $default_currency)->first()->rate;
-
-        return round($usd_amount * $session_rate);
-        }
+            $session_rate = Currency::whereCode($default_currency)->first()->rate;
+            return round($usd_amount * $session_rate);
+        // }
     }
 
     // Get default currency code if session is not set
@@ -480,40 +453,23 @@ class RoomsPrice extends Model
 	 */
 	public function getCodeAttribute()
     {
-        //get currenct url
-      /*$route=@Route::getCurrentRoute();
-      
-      if($route)
-      {
-        $api_url = @$route->getPath();
-      }
-      else
-      {
-        $api_url = '';
-      }
-          $url_array=explode('/',$api_url);
-            //Check current user login is web or mobile
-          if(@$url_array['0']=='api')*/
-          if(request()->segment(1) == 'api')
-          { 
-    
-            if(JWTAuth::parseToken()->authenticate()->currency_code) 
-             //set user currency code 
-             return JWTAuth::parseToken()->authenticate()->currency_code;
-             
-            else
-                //set default currency  code . for user currency code not given.
-             return DB::table('currency')->where('default_currency', 1)->first()->code;
-          }
-          else
-          {
-            if(Session::get('currency'))
-           return Session::get('currency');
-           else
-           return DB::table('currency')->where('default_currency', 1)->first()->code;
-
-          }
-       
+        // //get currenct url
+        // if(request()->segment(1) == 'api')
+        // { 
+        //     // if(JWTAuth::parseToken()->authenticate()->currency_code) 
+        //     //     //set user currency code 
+        //     //     return JWTAuth::parseToken()->authenticate()->currency_code;
+        //     // else
+        //     //     //set default currency  code . for user currency code not given.
+        //     //     return DB::table('currency')->where('default_currency', 1)->first()->code;
+        // }
+        // else
+        // {
+        //     if(Session::get('currency'))
+        //         return Session::get('currency');
+        //     else
+                return DB::table('currency')->where('default_currency', 1)->first()->code;
+        // }
     }
 
       /**

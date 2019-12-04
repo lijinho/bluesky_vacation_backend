@@ -881,82 +881,57 @@ class Rooms extends Model {
 	 */
 	public function getOverallStarRatingAttribute()
 	{
-		//get current url
-		/*$route=@Route::getCurrentRoute();
+		// if(request()->segment(1) == 'api')
+		// {
+		// 	$user_details = Auth::user();
+		// 	//get review details
+		// 	$reviews = Reviews::where('room_id', $this->attributes['id'])->where('user_to', $this->attributes['user_id']);
 
-		if($route)
-		{
-			$api_url = @$route->getPath();
-		}
-		else
-		{
-			$api_url = '';
-		}
+		// 	if($reviews->count()==0)
+		// 	{
+		// 		$result['rating_value']='0';
+		// 	}
+		// 	else
+		// 	{
+		// 		$result['rating_value']= @($reviews->sum('rating') / $reviews->count());
+		// 	}
 
-		 $url_array=explode('/',$api_url);
-			//Api currency conversion
-		  if(@$url_array['0']=='api')*/
-		if(request()->segment(1) == 'api')
-		{
-			$user_details = JWTAuth::parseToken()->authenticate();
-			//get review details
-			$reviews = Reviews::where('room_id', $this->attributes['id'])->where('user_to', $this->attributes['user_id']);
+		// 	$result_wishlist=SavedWishlists::with('wishlists')->where('room_id',$this->attributes['id'])->where('user_id',$user_details->id);
 
-			if($reviews->count()==0)
+		// 	if($result_wishlist->count() == 0)
+		// 		$result['is_wishlist']="No";
+		// 	else
+		// 		$result['is_wishlist']="Yes";
 
-			{
-				$result['rating_value']='0';
-			}
+		// 	return $result;
+		// }
+		// else
+		// {
+		// 	$reviews = Reviews::where('room_id', $this->attributes['id'])->where('user_to', $this->attributes['user_id']);
+		// 	$average = @($reviews->sum('rating') / $reviews->count());
+		// 	if($average)
+		// 	{
+		// 		$html  = '<div class="star-rating"> <div class="foreground">';
 
-			else
-			{
-				$result['rating_value']= @($reviews->sum('rating') / $reviews->count());
+		// 		$whole = floor($average);
+		// 		$fraction = $average - $whole;
 
-			}
+		// 		for ( $i = 0; $i < $whole; $i ++ ) {
+		// 			$html .= ' <i class="icon icon-beach icon-star"></i>';
+		// 		}
 
-			$result_wishlist=SavedWishlists::with('wishlists')->where('room_id',$this->attributes['id'])->where('user_id',$user_details->id);
+		// 		if ( $fraction >= 0.5 ) {
+		// 			$html .= ' <i class="icon icon-beach icon-star-half"></i>';
+		// 		}
 
-			if($result_wishlist->count() == 0)
-
-				$result['is_wishlist']="No";
-
-			else
-
-				$result['is_wishlist']="Yes";
-
-			return $result;
-
-		}
-		else
-		{
-
-			$reviews = Reviews::where('room_id', $this->attributes['id'])->where('user_to', $this->attributes['user_id']);
-
-			$average = @($reviews->sum('rating') / $reviews->count());
-
-			if($average)
-			{
-				$html  = '<div class="star-rating"> <div class="foreground">';
-
-				$whole = floor($average);
-				$fraction = $average - $whole;
-
-				for ( $i = 0; $i < $whole; $i ++ ) {
-					$html .= ' <i class="icon icon-beach icon-star"></i>';
-				}
-
-				if ( $fraction >= 0.5 ) {
-					$html .= ' <i class="icon icon-beach icon-star-half"></i>';
-				}
-
-				$html .= ' </div> <div class="background mb_blck">';
-				$html .= '<i class="icon icon-star icon-light-gray"></i> <i class="icon icon-star icon-light-gray"></i> <i class="icon icon-star icon-light-gray"></i> <i class="icon icon-star icon-light-gray"></i> <i class="icon icon-star icon-light-gray"></i>';
-				$html .= ' </div> </div>';
-				return $html;
-			}
-			else
+		// 		$html .= ' </div> <div class="background mb_blck">';
+		// 		$html .= '<i class="icon icon-star icon-light-gray"></i> <i class="icon icon-star icon-light-gray"></i> <i class="icon icon-star icon-light-gray"></i> <i class="icon icon-star icon-light-gray"></i> <i class="icon icon-star icon-light-gray"></i>';
+		// 		$html .= ' </div> </div>';
+		// 		return $html;
+		// 	}
+		// 	else
 				return '';
-		}
+		// }
 	}
 
 	/**

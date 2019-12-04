@@ -363,9 +363,7 @@ class Helpers {
 	 * @return false|int|string
 	 */
 	public function custom_strtotime( $date, $prev_format = '' ) {
-		 
 		if ( $prev_format == '' ) {
-		 
 			if ( env('PHP_DATE_FORMAT') == "d/m/Y" || env('PHP_DATE_FORMAT') == "m-d-Y" ) {
 				$seperator    = ( env('PHP_DATE_FORMAT') == "d/m/Y" ) ? "/" : "-";
 				$explode_date = explode( $seperator, $date );
@@ -377,29 +375,21 @@ class Helpers {
 					return strtotime( $original_date );
 				}
 			} else {
-				$seperator    = ( env('PHP_DATE_FORMAT') == "d/m/Y" ) ? "/" : "-";
-				 
+				$seperator    = ( env('PHP_DATE_FORMAT') == "d/m/Y" ) ? '/' : '-';
 				$explode_date = explode( $seperator, $date );
 			 
-				if ( count( $explode_date ) == "1" ) {
+				if ( count( $explode_date ) == 1 ) {
 					return strtotime( $date );
 				} else {
 					if($seperator == '-'){
 						//$original_date = $explode_date[1] . $seperator . $explode_date[0] . $seperator . $explode_date[2];
-						$original_date = $explode_date[2] . $seperator . $explode_date[1] . $seperator . $explode_date[0] ;							
+						$original_date = $explode_date[2] . $seperator . $explode_date[0] . $seperator . $explode_date[1] ;
 					}
 					else{
-						$original_date = $explode_date[2] . $seperator . $explode_date[0] . $seperator . $explode_date[1];
+						$original_date = $explode_date[2] . $seperator . $explode_date[1] . $seperator . $explode_date[0];
 					}
-					
-					// var_dump (strtotime($original_date));exit;
-					//echo $original_date;exit;
-					echo strtotime( '08-2019-01' );exit;
-					
 					return strtotime( $original_date );
 				}
-
-				// return '11111';
 				return strtotime( $date );
 			}
 		} else {

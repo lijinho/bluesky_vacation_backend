@@ -35,13 +35,13 @@ class Kernel extends HttpKernel
             \Illuminate\Session\Middleware\StartSession::class,
             // \Illuminate\Session\Middleware\AuthenticateSession::class,
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
-            \Illuminate\Session\Middleware\StartSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
 
         'api' => [
             \App\Http\Middleware\Cors::class,
+            \Illuminate\Session\Middleware\StartSession::class,
             'throttle:60,1',
             'bindings',
         ],

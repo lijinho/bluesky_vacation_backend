@@ -10,4 +10,9 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 class Controller extends BaseController
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
+
+    public function getParam($input, $param)
+    {
+        return isset($input[$param]) ? $input[$param] : null;
+    }
 }

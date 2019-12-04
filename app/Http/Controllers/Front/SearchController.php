@@ -18,6 +18,7 @@ use App\Http\Requests;
 use App\Models\Front\PropertyType;
 use App\Models\Front\RoomType;
 use App\Models\Front\Rooms;
+use App\Models\Front\RoomsPrice;
 use App\Models\Front\RoomsPhotos;
 use App\Models\Front\HostExperiencePhotos;
 use App\Models\Front\HostExperiences;
@@ -70,49 +71,48 @@ class SearchController extends Controller
 	 * @return \BladeView|bool|\Illuminate\Contracts\View\Factory|\Illuminate\View\View
 	 */
 	public function index(Request $request){
+        $input = $request->json()->all();
+
         $current_refinement="Homes"; //either homes or experiences default Homes
-        if(!empty($request->input('current_refinement')))
+        if(!empty($this->getParam($input, 'current_refinement')))
         {
-            $current_refinement=@$request->input('current_refinement');
+            $current_refinement=@$this->getParam($input, 'current_refinement');
         }
 
         $previous_currency = Session::get('search_currency');
         $currency = Session::get('currency');
        
-        $checkin_date_format        = $request->input('checkin_date_format');
-        $checkout_date_format      = $request->input('checkout_date_format');
-        $php_date_format      = $request->input('php_date_format');
-        if(!empty($request->input('checkin')) && $this->helper->custom_strtotime($request->input('checkin'), $php_date_format)) {
-            $data['st_date'] = date(env('PHP_DATE_FORMAT'),$this->helper->custom_strtotime($request->input('checkin'), $php_date_format));
-            $data['checkin'] = date(env('PHP_DATE_FORMAT'),$this->helper->custom_strtotime($request->input('checkin'), $php_date_format));
+        $checkin_date_format        = $this->getParam($input, 'checkin_date_format');
+        $checkout_date_format      = $this->getParam($input, 'checkout_date_format');
+        $php_date_format      = $this->getParam($input, 'php_date_format');
+        if(!empty($this->getParam($input, 'checkin')) && $this->helper->custom_strtotime($this->getParam($input, 'checkin'), $php_date_format)) {
+            $data['st_date'] = date(env('PHP_DATE_FORMAT'),$this->helper->custom_strtotime($this->getParam($input, 'checkin'), $php_date_format));
+            $data['checkin'] = date(env('PHP_DATE_FORMAT'),$this->helper->custom_strtotime($this->getParam($input, 'checkin'), $php_date_format));
         } else {
             $data['checkin'] = null;
             $data['st_date'] = null;
         } 
 
-        if(!empty($request->input('checkout')) && $this->helper->custom_strtotime($request->input('checkout'), $php_date_format)) {
-            $data['end_date'] = date(env('PHP_DATE_FORMAT'),$this->helper->custom_strtotime($request->input('checkout'), $php_date_format));
-            $data['checkout'] = date(env('PHP_DATE_FORMAT'),$this->helper->custom_strtotime($request->input('checkout'), $php_date_format));
+        if(!empty($this->getParam($input, 'checkout')) && $this->helper->custom_strtotime($this->getParam($input, 'checkout'), $php_date_format)) {
+            $data['end_date'] = date(env('PHP_DATE_FORMAT'),$this->helper->custom_strtotime($this->getParam($input, 'checkout'), $php_date_format));
+            $data['checkout'] = date(env('PHP_DATE_FORMAT'),$this->helper->custom_strtotime($this->getParam($input, 'checkout'), $php_date_format));
         } else {
             $data['end_date'] = null;
             $data['checkout'] = null;
         }    
         
-        $data['location']           = $request->json()->all()['location'];
-
-        return 'location: ('.$data['location'].')';
-        
-        $data['guest']              = $request->input('guests')=='' ? 1 : $request->input('guests');
-        $data['bedrooms']           = $request->input('bedrooms');
-        $data['bathrooms']          = $request->input('bathrooms');
-        $data['beds']               = $request->input('beds');
-        $data['property_type']      = $request->input('property_type');
-        $data['room_type']          = $request->input('room_type');
-        $data['amenities']          = $request->input('amenities');
-        $data['min_price']          = $request->input('min_price');
-        $data['max_price']          = $request->input('max_price');
-        $data['instant_book']       = $request->input('instant_book') ? $request->input('instant_book') : 0;
-        $data['property_id']        = $request->input('property_id') ? $request->input('property_id') : '';
+        $data['location']           = $this->getParam($input, 'location');
+        $data['guest']              = $this->getParam($input, 'guests')=='' ? 1 : $this->getParam($input, 'guests');
+        $data['bedrooms']           = $this->getParam($input, 'bedrooms');
+        $data['bathrooms']          = $this->getParam($input, 'bathrooms');
+        $data['beds']               = $this->getParam($input, 'beds');
+        $data['property_type']      = $this->getParam($input, 'property_type');
+        $data['room_type']          = $this->getParam($input, 'room_type');
+        $data['amenities']          = $this->getParam($input, 'amenities');
+        $data['min_price']          = $this->getParam($input, 'min_price');
+        $data['max_price']          = $this->getParam($input, 'max_price');
+        $data['instant_book']       = $this->getParam($input, 'instant_book') ? $this->getParam($input, 'instant_book') : 0;
+        $data['property_id']        = $this->getParam($input, 'property_id') ? $this->getParam($input, 'property_id') : '';
         
         $data['room_type']          = RoomType::dropdown();
         $data['room_types']         = RoomType::where('status','Active')->get();
@@ -120,11 +120,11 @@ class SearchController extends Controller
         $data['amenities']          = Amenities::activeType()->active()->get();
         $data['amenities_type']     = AmenitiesType::active_all();
         
-        $data['property_type_selected'] =$request->input('property_type');
-        $data['room_type_selected'] = $request->input('room_type');
-        $data['amenities_selected'] = $request->input('amenities');
+        $data['property_type_selected'] =$this->getParam($input, 'property_type');
+        $data['room_type_selected'] = $this->getParam($input, 'room_type');
+        $data['amenities_selected'] = $this->getParam($input, 'amenities');
         $data['currency_symbol']    = Currency::find(1)->symbol;
-        $data['cat_type_selected'] = $request->input('host_experience_category');
+        $data['cat_type_selected'] = $this->getParam($input, 'host_experience_category');
         $data['default_min_price'] = $this->payment_helper->currency_convert('USD', $currency, 10);
         $data['default_max_price'] = $this->payment_helper->currency_convert('USD', $currency, 5000);
 
@@ -142,7 +142,7 @@ class SearchController extends Controller
         $data['max_price_check'] = $this->payment_helper->currency_convert('', 'USD', $data['max_price']);
         $data['current_refinement']=$current_refinement;
 
-        Session::forget('search_currency');
+        // Session::forget('search_currency');
         $current_location0 = preg_replace('/\s+/', '', $request->location);
        
         $current_location1 = str_replace("-", ", ", "$current_location0");
@@ -157,7 +157,6 @@ class SearchController extends Controller
 
             $cLat  = $room->rooms_address->latitude;
             $cLong = $room->rooms_address->longitude;
-            // return $room;
             $data['cLat'] =$cLat;
             $data['cLong']= $cLong;
         }
@@ -191,19 +190,21 @@ class SearchController extends Controller
     
     function searchexperienceResult(Request $request)
     {
+        $input = $request->json()->all();
+
         $previous_currency = Session::get('previous_currency');
         $currency = Session::get('currency');
-        $full_address  = $request->input('location');
+        $full_address  = $this->getParam($input, 'location');
 
       
-        $checkin       = $request->input('checkin');
+        $checkin       = $this->getParam($input, 'checkin');
       
-        $checkout      = $request->input('checkout');
-        $guest         = $request->input('guest');
-        $host_experience_category = $request->input('host_experience_category');
-        $min_price     = $request->input('min_price');
-        $max_price     = $request->input('max_price');
-        $map_details   = $request->input('map_details');
+        $checkout      = $this->getParam($input, 'checkout');
+        $guest         = $this->getParam($input, 'guest');
+        $host_experience_category = $this->getParam($input, 'host_experience_category');
+        $min_price     = $this->getParam($input, 'min_price');
+        $max_price     = $this->getParam($input, 'max_price');
+        $map_details   = $this->getParam($input, 'map_details');
         
         $data['viewport'] = '';
 
@@ -397,24 +398,25 @@ class SearchController extends Controller
 	 */
 
     public function searchResultOnMap(Request $request){
+        $input = $request->json()->all();
+
+        $full_address  = $this->getParam($input, 'location');
         
-        $full_address  = $request->input('location');
-        
-        $map_details   = $request->input('map_details');
-        $checkin       = $request->input('checkin');
-        $checkout      = $request->input('checkout');
-        $guest         = $request->input('guest');
-        $bathrooms     = $request->input('bathrooms');
-        $bedrooms      = $request->input('bedrooms');
-        $beds          = $request->input('beds');
-        $property_type = $request->input('property_type');
-        $room_type     = $request->input('room_type');
-        $amenities     = $request->input('amenities');
-        $min_price     = $request->input('min_price');
-        $max_price     = $request->input('max_price');
-        $instant_book  = $request->input('instant_book');
-        $property_id   = $request->input('property_id');
-        $limit_distance     = $request->input('limit_distance');
+        $map_details   = $this->getParam($input, 'map_details');
+        $checkin       = $this->getParam($input, 'checkin');
+        $checkout      = $this->getParam($input, 'checkout');
+        $guest         = $this->getParam($input, 'guest');
+        $bathrooms     = $this->getParam($input, 'bathrooms');
+        $bedrooms      = $this->getParam($input, 'bedrooms');
+        $beds          = $this->getParam($input, 'beds');
+        $property_type = $this->getParam($input, 'property_type');
+        $room_type     = $this->getParam($input, 'room_type');
+        $amenities     = $this->getParam($input, 'amenities');
+        $min_price     = $this->getParam($input, 'min_price');
+        $max_price     = $this->getParam($input, 'max_price');
+        $instant_book  = $this->getParam($input, 'instant_book');
+        $property_id   = $this->getParam($input, 'property_id');
+        $limit_distance     = $this->getParam($input, 'limit_distance');
         
         if(!is_array($room_type))
         {
@@ -454,7 +456,7 @@ class SearchController extends Controller
         // dd($full_address);
         $checkin  = date('Y-m-d', $this->helper->custom_strtotime($checkin));
         $checkout = date('Y-m-d', $this->helper->custom_strtotime($checkout));
-        $dates_available = ($request->input('checkin') !='');
+        $dates_available = ($this->getParam($input, 'checkin') !='');
         $days     = $this->get_days($checkin, $checkout);
         unset($days[count($days)-1]);
         $total_nights = count($days);
@@ -524,22 +526,26 @@ class SearchController extends Controller
         return($rooms->get());
     }
     public function searchResult(Request $request){
-        $full_address  = $request->input('location');
-        $map_details   = $request->input('map_details');
-        $checkin       = $request->input('checkin');
-        $checkout      = $request->input('checkout');
-        $guest         = $request->input('guest');
-        $bathrooms     = $request->input('bathrooms');
-        $bedrooms      = $request->input('bedrooms');
-        $beds          = $request->input('beds');
-        $property_type = $request->input('property_type');
-        $room_type     = $request->input('room_type');
-        $amenities     = $request->input('amenities');
-        $min_price     = $request->input('min_price');
-        $max_price     = $request->input('max_price');
-        $instant_book  = $request->input('instant_book');
-        $property_id   = $request->input('property_id');
-        $limit_distance     = $request->input('limit_distance');
+
+        $input = $request->json()->all();
+
+        $full_address  = $this->getParam($input, 'location');
+        $map_details   = $this->getParam($input, 'map_details');
+        $checkin       = $this->getParam($input, 'checkin');
+        $checkout      = $this->getParam($input, 'checkout');
+        $guest         = $this->getParam($input, 'guest');
+        $bathrooms     = $this->getParam($input, 'bathrooms');
+        $bedrooms      = $this->getParam($input, 'bedrooms');
+        $beds          = $this->getParam($input, 'beds');
+        $property_type = $this->getParam($input, 'property_type');
+        $room_type     = $this->getParam($input, 'room_type');
+        $amenities     = $this->getParam($input, 'amenities');
+        $min_price     = $this->getParam($input, 'min_price');
+        $max_price     = $this->getParam($input, 'max_price');
+        $instant_book  = $this->getParam($input, 'instant_book');
+        $property_id   = $this->getParam($input, 'property_id');
+        $limit_distance = $this->getParam($input, 'limit_distance');
+        $search_option  = $this->getParam($input, 'searchOption');
 
         if(is_numeric ($full_address)){
             $roomId = $full_address;
@@ -553,42 +559,44 @@ class SearchController extends Controller
             );
             
             $rooms = $rooms->join('rooms_address', 'rooms.id', '=', 'rooms_address.room_id');
-            $date = date('Y-m-d');
             $rooms = $rooms->leftJoin('reviews', 'reviews.room_id', '=', 'rooms.id');
             $rooms = $rooms->join('rooms_price', 'rooms.id', '=', 'rooms_price.room_id');
             $rooms = $rooms->leftJoin('membershiptypes', 'membershiptypes.id', '=', 'rooms.plan_type');
             $rooms->where( "rooms.id" , "=", "$roomId")
-				->where('rooms.status', 'Listed');
-                return($rooms->paginate(10));
+                ->where('rooms.status', 'Listed');
+                
+            return($rooms->paginate(10));
         }
         if(!is_array($room_type))
         {
             if($room_type != '')
-             $room_type = explode(',', $room_type);
+                $room_type = explode(',', $room_type);
             else
-             $room_type = [];
+                $room_type = [];
         }
         if(!is_array($property_type))
         {
             if($property_type != '')
-             $property_type = explode(',', $property_type);
+                $property_type = explode(',', $property_type);
             else
-             $property_type = [];
+                $property_type = [];
         }
 
         if(!is_array($amenities))
         {
             if($amenities != '')
-             $amenities = explode(',', $amenities);
+                $amenities = explode(',', $amenities);
             else
-             $amenities = [];
+                $amenities = [];
         }
 
         $property_type_val   = [];
         $room_type_val       = [];
         $rooms_whereIn       = [];
-        if($request->searchOption == 'address'){
-            if($full_address){
+
+        if($search_option == 'address'){
+            
+            if($full_address){                
                 $address      = str_replace([" ","%2C"], ["+",","], "$full_address");
                 $geocode      = @file_get_contents('https://maps.google.com/maps/api/geocode/json?key='.env('GOOGLE_MAP_API').'&address='.$address.'&sensor=false&libraries=places');
                 $json         = json_decode($geocode);
@@ -607,6 +615,7 @@ class SearchController extends Controller
 
             if(@$json->{'results'})
             {
+                
                 $cLat  = $json->{'results'}[0]->{'geometry'}->{'location'}->{'lat'};
                 $cLong = $json->{'results'}[0]->{'geometry'}->{'location'}->{'lng'};
 
@@ -614,7 +623,7 @@ class SearchController extends Controller
                 $maxLat = $json->{'results'}[0]->{'geometry'}->{'viewport'}->{'northeast'}->{'lat'};
                 $minLong = $json->{'results'}[0]->{'geometry'}->{'viewport'}->{'southwest'}->{'lng'};
                 $maxLong = $json->{'results'}[0]->{'geometry'}->{'viewport'}->{'northeast'}->{'lng'};
-                // dd($json->{'results'}[0]->{'address_components'});
+
                 foreach($json->{'results'}[0]->{'address_components'} as $component){
                     if($component->{'types'}[0] == 'country'){
                         $searchCountry = $component->{'short_name'};
@@ -638,7 +647,7 @@ class SearchController extends Controller
                 $maxLong = 1000;
             }
         }
-        else{
+        else {
             $cLat = $full_address['center']['lat'];
             $cLong =$full_address['center']['lng'];
     
@@ -651,11 +660,11 @@ class SearchController extends Controller
 
         $checkin  = $checkin != "" ? date('Y-m-d', $this->helper->custom_strtotime($checkin)) : "";
         $checkout = $checkout != "" ? date('Y-m-d', $this->helper->custom_strtotime($checkout)) : "";
-        $dates_available = ($request->input('checkin') !='');
+        $dates_available = ($this->getParam($input, 'checkin') !='');
         $days     = $this->get_days($checkin, $checkout);
         unset($days[count($days)-1]);
         $total_nights = count($days);
-
+       
         $total_weekends = 0;
         foreach($days as $day) {
             $weekday = date('N', strtotime($day));
@@ -680,15 +689,17 @@ class SearchController extends Controller
          DB::raw('avg(rating) as avg_rating, count(reviews.room_id) as review_count')
         );
 
+
         $rooms = $rooms->whereNotIn('rooms.id', $not_available_room_ids);
-        $cenLat = ($minLat + $maxLat) / 2;
-        $cenLong = ($minLong + $maxLong) / 2;
+
         $rooms = $rooms->join('rooms_address', 'rooms.id', '=', 'rooms_address.room_id');
-        $date = date('Y-m-d');
         $rooms = $rooms->leftJoin('reviews', 'reviews.room_id', '=', 'rooms.id');
         $rooms = $rooms->join('rooms_price', 'rooms.id', '=', 'rooms_price.room_id');
         $rooms = $rooms->leftJoin('membershiptypes', 'membershiptypes.id', '=', 'rooms.plan_type');
-       
+
+        $cenLat = ($minLat + $maxLat) / 2;
+        $cenLong = ($minLong + $maxLong) / 2;
+        $date = date('Y-m-d');
         $rooms = $rooms->whereRaw( " 
             rooms.status ='Listed' and 
             rooms.subscription_end_date >='$date' and 
@@ -716,7 +727,7 @@ class SearchController extends Controller
                 }
             }
         }
-             
+
         $property_type = array_values($property_type);
         if(count($property_type))
         {
@@ -758,14 +769,14 @@ class SearchController extends Controller
         //     $rooms = $rooms->orderBy(DB::raw("RAND($randomOrder)"));
         // }
 
+        $randomOrder = mt_rand() ;
+        $rooms = $rooms->orderBy(DB::raw("RAND($randomOrder)"));
         $rooms->groupBy('rooms.id');
 
-        // return response()->json([
-        //     'success' => true,
-        //     'data' => []
-        // ]);
+        return $rooms->paginate(10);
 
-        return response()->json($rooms->paginate(50));
+        // return response()->json(array('status' => $array, 'data' => []));
+        // return response()->json($rooms->paginate(50));
     }
 
 	/**
