@@ -193,8 +193,8 @@ class DashboardController extends Controller
 
 
     public function profilepictureupload(Request $request){
-        // dd($request->file('myFile'));
-        if($image = $request->file('myFile')){
+
+			if($image = $request->file('myFile')){
 			$extension      =   $image->getClientOriginalExtension();
 			$file_name_time = time();
 			$filename       =   'profile_pic_' . $file_name_time . '.' . $extension;

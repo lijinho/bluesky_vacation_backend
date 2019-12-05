@@ -131,11 +131,7 @@ Route::get('/logout', 'Auth\LogoutController@logout');
     Route::post('/ajax/rooms/manage-listing/{id}/{year}/{month}/get_daily_prices', 'Front\CalendarController@get_daily_prices');
     Route::post('/ajax/rooms/manage-listing/save_daily_prices', 'Front\CalendarController@save_daily_prices');
 
-
-
-
     Route::post('/ajax/rooms/manage-listing/{id}/unavailable_calendar', 'Front\CalendarController@unavailable_calendar');
-
     Route::get('/ajax/rooms/manage-listing/{id}/get_unavailable_calendar', 'Front\CalendarController@get_unavailable_calendar');
     Route::post('/ajax/rooms/manage-listing/{id}/seasonal_calendar', 'Front\CalendarController@seasonal_calendar');
     Route::post('/ajax/rooms/manage-listing/{id}/save_seasonal_price', 'Front\CalendarController@save_seasonal_price');
@@ -147,11 +143,7 @@ Route::get('/logout', 'Auth\LogoutController@logout');
     Route::get('/ajax/rooms/manage-listing/{id}/ical_delete', 'Front\CalendarController@ical_delete');
     Route::get('/ajax/rooms/manage-listing/{id}/ical_refresh', 'Front\CalendarController@ical_refresh');
     Route::post('/ajax/rooms/manage-listing/{id}/check_reservation_conflict_req', 'Front\RoomsController@check_reservation_conflict_req');
-
     Route::match(['get', 'post'],'/ajax/rooms/manage-listing/{id}/calendar_import', 'Front\CalendarController@ical_import')->where('id', '[0-9]+');
-
-
-
 
     // Room booking Route
     Route::post('/ajax/book/request/{id}', 'Front\RoomsController@roombooking');
@@ -175,11 +167,13 @@ Route::get('/logout', 'Auth\LogoutController@logout');
     Route::post('/ajax/wishlist_create', 'Front\WishlistController@create');
     Route::post('/ajax/save_wishlist', 'Front\WishlistController@save_wishlist');
     Route::post('/ajax/rooms/price_calculation', 'Front\RoomsController@price_calculation');
+
     // ==============Search Page Route ================
     Route::post('/ajax/searchIndex', 'Front\SearchController@index');
     Route::post('/ajax/searchResult', 'Front\SearchController@searchResult');
     Route::post('/ajax/searchResultOnMap', 'Front\SearchController@searchResultOnMap');
     Route::post('/ajax/searchMapRooms', 'Front\SearchController@searchMapRooms');
+    
     //===============PricingPageRoute========================
     Route::get('/ajax/membershiptypes', 'Front\MembershipController@gettypes');
     Route::get('/ajax/membershiptype/{planId}', 'Front\MembershipController@gettype');
@@ -187,11 +181,11 @@ Route::get('/logout', 'Auth\LogoutController@logout');
     Route::post('/ajax/membership/braintree_token', 'Front\MembershipController@Braintree_token');
     // Route::post('/ajax/paypal/subscribe/createplan', 'Front\MembershipController@paypal_createplan');
     Route::post('/ajax/paypal/subscribe/excute', 'Front\MembershipController@paypal_excute');
+    
     //==============Listing Subscribe Page===========//
     Route::get('/ajax/rooms/getpublishlistings/{id}', 'Front\RoomsController@getpublishlistings');
     Route::post('/ajax/rooms/post_subscribe_property/{id}', 'Front\RoomsController@post_subscribe_property');
     Route::post('/ajax/rooms/post_subscribe_property_paypal/create_plan', 'Front\MembershipController@paypal_createplan');
-
 
     // ============= Chat Route ======================//
     Route::post('/ajax/chat/sendmessage', 'Front\ChatsController@sendMessage');
@@ -203,6 +197,7 @@ Route::get('/logout', 'Auth\LogoutController@logout');
     Route::get('/ajax/chat/getmessages', 'Front\ChatsController@getmessages');
     Route::get('/ajax/chat/getcontactlists', 'Front\ChatsController@getcontactlists');
     Route::get('/ajax/chat/getContactId/{hostid}/{userid}', 'Front\ChatsController@getContactId');
+
     /* ==============BLOG Route ====================*/
     Route::get('/ajax/blog/index', 'Front\PostController@index');
 
@@ -212,13 +207,35 @@ Route::get('/logout', 'Auth\LogoutController@logout');
     Route::get('/ajax/blog/author/{author}', 'Front\PostController@searchByAuthor');
     Route::get('/ajax/blog/detail/{post}', 'Front\PostController@detail');
 
-
     Route::post('/ajax/blog/post/comment', 'Front\PostController@comment');
     Route::post('/ajax/blog/post/comment/reply', 'Front\PostController@commentreply');
-
 
 
     Route::get('/ajax/get/page/{slug}', 'Front\PagesController@get_page_details');
     Route::get('/ajax/pages/getStateListings/{page_name}/{state}', 'Front\PagesController@getStateListings');
     Route::get('/ajax/pages/getCityListings/{page_name}/{state}', 'Front\PagesController@getCityListings');
 // });
+
+Route::group(['name' => 'bookingautomation'], function() {
+    Route::post('/ba/account/register', 'BA\BookingAutomationController@createAccount');
+    Route::get('/ba/account/getpropid', 'BA\BookingAutomationController@getPropId');
+    Route::get('/ba/account/getcredential', 'BA\BookingAutomationController@getCredential');
+    Route::get('/ba/account/get_ba_credential', 'BA\BookingAutomationController@getBaCredential');
+
+    Route::group(['name' => 'api'], function() {
+        Route::get('/ba/api/get_pricing/{room_id}', 'BA\BookingAutomationController@getPricing');
+        Route::get('/ba/api/get_property/', 'BA\BookingAutomationController@getProperty');
+        Route::get('/ba/api/get_room/{room_id}', 'BA\BookingAutomationController@getRoom');
+        Route::get('/ba/api/get_availability/{room_id}/{start}/{end}', 'BA\BookingAutomationController@getAvailability');
+        Route::get('/ba/api/get_room_dates', 'BA\BookingAutomationController@getRoomDates');
+        Route::get('/ba/api/get_room_status', 'BA\BookingAutomationController@getRoomStatus');
+
+
+        Route::get('/ba/api/getroomlistings', 'BA\BookingAutomationController@getListingsHasBa');
+        Route::get('/ba/api/update', 'BA\BookingAutomationController@update');
+        Route::get('/ba/api/set_baroomid', 'BA\BookingAutomationController@setBaRoomId');
+        Route::get('/ba/api/get_baroomid', 'BA\BookingAutomationController@getBaRoomId');
+        Route::get('/ba/api/get_bookings', 'BA\BookingAutomationController@getBookings');
+        
+    });
+}); 

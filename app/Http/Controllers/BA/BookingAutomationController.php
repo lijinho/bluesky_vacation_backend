@@ -244,186 +244,175 @@ class BookingAutomationController extends Controller
         dd($bookings);
     }
 
-    public function update(){
-        $response = BookingHelper::getProperty();
-        $decode_res = json_decode($response, true);
-        $props = [];
-        $props[0] = $decode_res['getProperty'][0];
-        $rooms_ba = $props[0]['roomTypes'];
+	public function update() {
+		$error_status = [];
+		$response = BookingHelper::getProperty();
+		$decode_res = json_decode($response, true);
+		$props = [];
+		$props[0] = $decode_res['getProperty'][0];
+		$rooms_ba = $props[0]['roomTypes'];
+		$rooms_vr = Rooms::where(['user_id' => Auth::id()])->get();
 
-        $rooms_vr = Rooms::where(['user_id' => Auth::id()])->get();
+		/**
+		 * Get basic info for each rooms which user has and save in VR database.
+		 */
+		for ($id=0; $id < count($rooms_ba); $id++) {
+			$rba = $rooms_ba[$id];
+			$rvr = Rooms::where(['ba_roomid' => $rba['roomId'], 'user_id' => Auth::id()])->get()->first();
+			if($rvr == null) continue;
+			$room_price = RoomsPrice::where(['room_id' => $rvr->id])->get()->first();
+			$room_price->night = $rba['minPrice'];
+			$room_price->week = $rba['minPrice'] * 7;
+			$room_price->month = $rba['minPrice'] * 30;
+			$room_price->weekend = $rba['minPrice'] * 2;
+			$room_price->cleaning = $rba['cleaningFee'];
+			$room_price->tax = $rba['taxPercent'];
+			$room_price->minimum_stay = $rba['minStay'];
+			$room_price->save();
+		}
 
-        /**
-         * Get basic info for each rooms which user has and save in VR database.
-         */
+		/**
+		 * Delete old calendar and seasonals info for every rooms of an user in VR database.
+		 */
+		$today = date("Y-m-d");
+		$rooms = Rooms::where('user_id', Auth::id())->get();
+		try {
+			foreach($rooms as $room) {
+				Calendar::where('room_id', $room->id)->where('end_date', '>', $today)->delete();
+				SeasonalPrice::where('room_id', $room->id)->where('end_date', '>=', $today)->delete();
+				Reservation::where('room_id', $room->id)->where('checkout', '>', $today)->delete();
+			}
+		}
+		catch(exception $e) {
+			$error_status = $e;
+		}
 
-         for ($id=0; $id < count($rooms_ba); $id++) {
-            $rba = $rooms_ba[$id];
-            // $rvr = $rooms_vr[$id];
-            // dd($rba['name']);
-            $rvr = Rooms::where(['ba_roomid' => $rba['roomId'], 'user_id' => Auth::id()])->get()->first();
-            // dd($rvr);
-            if($rvr == null) continue;
-            $room_price = RoomsPrice::where(['room_id' => $rvr->id])->get()->first();
-            $room_price->night = $rba['minPrice'];
-            $room_price->week = $rba['minPrice'] * 7;
-            $room_price->month = $rba['minPrice'] * 30;
-            $room_price->weekend = $rba['minPrice'] * 2;
-            $room_price->cleaning = $rba['cleaningFee'];
-            $room_price->tax = $rba['taxPercent'];
-            $room_price->minimum_stay = $rba['minStay'];
-            $room_price->save();                  
-        }
+		/* Update rates */
+		$rates = BookingHelper::getAllRates();
+		foreach($rates as $rate) {
+			$room_id = Rooms::where(['ba_roomid' => $rate['roomId'], 'user_id' => Auth::id()])->get()->first()['id'];
+			if($room_id == null) continue;
+			$week = $rate['roomPrice'] * 7;
+			$month = $rate['roomPrice'] * 30;
 
-        /**
-         * Delete old calendar and seasonals info for every rooms of an user in VR database.
-         */
-        $today = date("Y-m-d");
+			$seasonal_price = [
+				'room_id' => $room_id,    
+				'rateId' => $rate['rateId'],    
+				'seasonal_name'  => $rate['name'],
+				'start_date' => $rate['firstNight'],
+				'end_date' => $rate['lastNight'],
+				'price'   => $rate['roomPrice'],
+				'week' => $week,
+				'month' =>$month,
+				'guests' => $rate['extraPersonPriceEnable'],
+				'additional_guest' => $rate['extraPersonPriceEnable'],
+				'minimum_stay'   => $rate['minNights'],
+				'strategy' => $rate['strategy'],
+				'status' => 'imported'
+			];
 
-        $rooms = Rooms::where('user_id', Auth::id())->get();
-        try {
-            foreach($rooms as $room) {
-                Calendar::where('room_id', $room->id)->where('end_date', '>', $today)->delete();
-                SeasonalPrice::where('room_id', $room->id)->where('end_date', '>=', $today)->delete();
-                Reservation::where('room_id', $room->id)->where('checkout', '>', $today)->delete();
-            }
-        }catch(exception $e){
-            var_dump($e);
-        }
+			SeasonalPrice::updateOrCreate(['room_id' => $room_id, 'seasonal_name' => $rate['name']], $seasonal_price);
+		}
 
-        // update rates
+		//Update bookings
+		$bookings = BookingHelper::getBookings();
+		foreach ($bookings as $key => $booking) {
+			// # add booking to database here code...
+			$start_time = strtotime($booking['firstNight']);
+			$last_time = strtotime($booking['lastNight'].'+ 1 days');
 
-        $rates = BookingHelper::getAllRates();
+			/**
+			 * There is apparent difference between last night and last date.
+			 * Delete old calendar info for every rooms of an user in VR database.
+			 */
+			$start_date = date('Y-m-d',$start_time);
+			$last_date = date('Y-m-d',$last_time);
 
-        foreach($rates as $rate) {
-            $room_id = Rooms::where(['ba_roomid' => $rate['roomId'], 'user_id' => Auth::id()])->get()->first()['id'];
-            if($room_id == null) continue;
-            $week = $rate['roomPrice'] * 7;
-            $month = $rate['roomPrice'] * 30;
+			$begin = new \DateTime( $start_date );
+			$end = new \DateTime( $last_date );
 
-            $seasonal_price = [
-                'room_id' => $room_id,              
-                'rateId' => $rate['rateId'],          
-                'seasonal_name'    => $rate['name'],
-                'start_date' => $rate['firstNight'],
-                'end_date' => $rate['lastNight'],
-                'price'   => $rate['roomPrice'],
-                'week' => $week,
-                'month' =>$month,
-                'guests' => $rate['extraPersonPriceEnable'],
-                'additional_guest' => $rate['extraPersonPriceEnable'],
-                'minimum_stay'   => $rate['minNights'],
-                'strategy' => $rate['strategy'],
-                'status' => 'imported'
-            ];
+			$rvr = Rooms::where(['ba_roomid' => $booking['roomId'], 'user_id' => Auth::id()])->get()->first();
 
-            SeasonalPrice::updateOrCreate(['room_id' => $room_id, 'seasonal_name' => $rate['name']], $seasonal_price);
-        }
+			if($rvr == null) continue;
 
-        //Update bookings
-        $bookings = BookingHelper::getBookings();
-        foreach ($bookings as $key => $booking) {
-            # add booking to database here code...
+			$requestid = $rvr['id'];
+			$seasonal_name = $booking['guestFirstName'].$booking['guestName'];
+			$guests =  $booking['numAdult'] + $booking['numChild'];
+			$notes = $booking['notes'];
+			$price = $booking['price'];
+			$diff = abs($last_time - $start_time);
+			$days = floor($diff / (60*60*24));
+			$price = (float)$price/$days;
 
-            $start_time = strtotime($booking['firstNight']);
-            // $last_time = strtotime($booking['lastNight'].'+ 1 days');
-            $last_time = strtotime($booking['lastNight'].'+ 1 days');
+			$status = "Not available";
 
-            /**
-             * There is apparent difference between last night and last date.
-             * Delete old calendar info for every rooms of an user in VR database.
-             */
-            
-            $start_date = date('Y-m-d',$start_time);
-            $last_date = date('Y-m-d',$last_time);
+			if($booking['status'] == 4) {
+				$status = "Blocked";
+			}
+			$reserveid = $booking['bookId'];
 
-            $begin = new \DateTime( $start_date );
-            $end = new \DateTime( $last_date );
+			$ba_status = 'Confirmed';
+			if($booking['status']==4) {
+				$ba_status = 'Black';
+				$seasonal_name = $booking['guestTitle'];
+			}
+	
+			if($booking['status']==0) continue;
+		
+			for($date = $begin; $date < $end; $date->modify('+1 day')) {
+				$reservation = [
+					'room_id' => $requestid,
+					'date'  => $date,
+					'seasonal_name' => $seasonal_name,
+					'start_date' => $start_date,
+					'end_date' => $last_date,
+					'notes'   => $notes,
+					'guests'   => $guests,
+					'source' => 'Import',
+					'price' => $price,
+					'status' => $status,
+					'reserveid' => $reserveid,
+				];
 
-            $rvr = Rooms::where(['ba_roomid' => $booking['roomId'], 'user_id' => Auth::id()])->get()->first();
+				try {
+					Calendar::updateOrCreate(['room_id' => $requestid, 'date' => $date], $reservation);
+				}
+				catch(exception $e) {
+					$error_status = collect($error_status, $e);
+				}
+			}
 
-            if($rvr == null) continue;
+			$price = (int)$price;
 
-            //dd($rvr);
+			$reservation = [
+				'room_id' => $requestid,
+				'reserveid' => $reserveid,
+				'checkin' => $start_date,
+				'checkout' => $last_date,
+				'nights'   => $price,
+				'number_of_guests'   => $guests,
+				'status' => 'Accepted',
+				'ba_status' =>  $ba_status,
+				'title' => $seasonal_name,
+				'currency_code' => 'USD'
+			];
 
-            $requestid = $rvr['id'];
+			try {
+				DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+				Reservation::updateOrCreate(['reserveid' => $reserveid], $reservation);
+				DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+			}
+			catch(exception $e) {
+				$error_status = collect($error_status, $e);
+			}
+		}
 
-            echo "requestid " . $requestid .PHP_EOL;
-            
-            $seasonal_name = $booking['guestFirstName'].$booking['guestName'];
-            echo "seasonal_name " . $seasonal_name.PHP_EOL;
-
-            $guests =  $booking['numAdult'] + $booking['numChild'];
-            echo "guests " . $guests;
-
-            $notes = $booking['notes'];
-            echo "notes " .PHP_EOL;
-
-            $price = $booking['price'];
-            $diff = abs($last_time - $start_time);
-
-            $days = floor($diff / (60*60*24));
-
-            $price = (float)$price/$days;
-
-            $status = "Not available";
-
-            if($booking['status'] == 4) {
-                $status = "Blocked";
-            }
-            $reserveid = $booking['bookId'];
-
-            $ba_status = 'Confirmed';
-            if($booking['status']==4) {
-                $ba_status = 'Black';
-                $seasonal_name = $booking['guestTitle'];
-            }
-            if($booking['status']==0) continue;
-
-            
-            for($date = $begin; $date < $end; $date->modify('+1 day')){
-                $reservation = [
-                    'room_id' => $requestid,
-                    'date'    => $date,
-                    'seasonal_name' => $seasonal_name,
-                    'start_date' => $start_date,
-                    'end_date' => $last_date,
-                    'notes'   => $notes,
-                    'guests'   => $guests,
-                    'source' => 'Import',
-                    'price' => $price,
-                    'status' => $status,
-                    'reserveid' => $reserveid,
-                ];
-
-                try {                    
-                    Calendar::updateOrCreate(['room_id' => $requestid, 'date' => $date], $reservation);
-                }catch(exception $e) {
-                    var_dump($e);
-                }
-            }
-            $price = (int)$price;
-            var_dump($requestid);
-            $reservation = [
-                            'room_id' => $requestid,
-                            'reserveid' => $reserveid,                                                        
-                            'checkin' => $start_date,
-                            'checkout' => $last_date,
-                            'nights'   => $price,
-                            'number_of_guests'   => $guests,
-                            'status' => 'Accepted',
-                            'ba_status' =>  $ba_status,
-                             'title' => $seasonal_name,
-                            'currency_code' => 'USD'
-                        ];
-            try {
-                var_dump($reservation);
-                Reservation::updateOrCreate(['reserveid' => $reserveid], $reservation);
-            }catch(exception $e){
-                var_dump($e);
-            }
-        }
-    }
+		if (empty($error_status)) {
+			return array('success' => true);
+		} else {
+			return array('success' => false, 'error' => $error_status);
+		}
+  }
 
     public function setBaRoomId(Request $request){
         // dd($id);
