@@ -193,9 +193,7 @@ class RoomsController extends Controller
 				'message' => 'You have to subscribe this listing first!'
 			);
 		}
-        
-        
-    }
+	}
 	public function new_room()
 	{
 		$data['property_type'] = PropertyType::active_all();
@@ -2417,14 +2415,15 @@ class RoomsController extends Controller
 		$data['room_id'] = $request->id;
 		$rooms = $data['result'] = Rooms::where('id',$request->id)->first();
 		$current_date = date('Y-m-d');
-		if($rooms->hasActiveSubscription()) {
-			$this->helper->flash_message('error',  trans('messages.plan_detail.already_list_subscribe')); // Call flash message function
-			return array(
-				'plan_types' =>  Membershiptype::orderBy('annual_fee')->get(),
-				'listings' => array(),
-				'subscribed_listings' => array()
-			);
-		}
+
+		// if($rooms->hasActiveSubscription()) {
+		// 	$this->helper->flash_message('error',  trans('messages.plan_detail.already_list_subscribe')); // Call flash message function
+		// 	return array(
+		// 		'plan_types' =>  Membershiptype::orderBy('annual_fee')->get(),
+		// 		'listings' => array(),
+		// 		'subscribed_listings' => array()
+		// 	);
+		// }
 		$users = User::find($rooms->user_id);
 		$user = User::find(Auth::user()->id);
 		$current_membership = $user->previous_membership();

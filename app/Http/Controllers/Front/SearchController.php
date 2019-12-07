@@ -12,7 +12,7 @@
  */
 
 namespace App\Http\Controllers\Front;
- 
+
 use Illuminate\Http\Request;
 use App\Http\Requests;
 use App\Models\Front\PropertyType;
@@ -50,59 +50,59 @@ class SearchController extends Controller
     protected $helper;  // Global variable for instance of Helpers
     public $map_tolerence;   // set the tolerance of latitude and longitude from the google map api
 
-	/**
-	 * Constructor to Set PaymentHelper instance in Global variable
-	 *
-	 * @param \App\Http\Helper\PaymentHelper $payment Instance of PaymentHelper
-	 */
+    /**
+     * Constructor to Set PaymentHelper instance in Global variable
+     *
+     * @param \App\Http\Helper\PaymentHelper $payment Instance of PaymentHelper
+     */
     public function __construct(PaymentHelper $payment)
     {
         $this->payment_helper = $payment;
         $this->helper = new Helpers;
         $this->map_tolerence = 0.2;
-        DB::enableQueryLog();        
+        DB::enableQueryLog();
     }
 
- 
-	/**
-	 * Search index
-	 * @param \Illuminate\Http\Request $request
-	 *
-	 * @return \BladeView|bool|\Illuminate\Contracts\View\Factory|\Illuminate\View\View
-	 */
-	public function index(Request $request){
+
+    /**
+     * Search index
+     * @param \Illuminate\Http\Request $request
+     *
+     * @return \BladeView|bool|\Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function index(Request $request)
+    {
         $input = $request->json()->all();
 
-        $current_refinement="Homes"; //either homes or experiences default Homes
-        if(!empty($this->getParam($input, 'current_refinement')))
-        {
-            $current_refinement=@$this->getParam($input, 'current_refinement');
+        $current_refinement = "Homes"; //either homes or experiences default Homes
+        if (!empty($this->getParam($input, 'current_refinement'))) {
+            $current_refinement = @$this->getParam($input, 'current_refinement');
         }
 
         $previous_currency = Session::get('search_currency');
         $currency = Session::get('currency');
-       
+
         $checkin_date_format        = $this->getParam($input, 'checkin_date_format');
         $checkout_date_format      = $this->getParam($input, 'checkout_date_format');
         $php_date_format      = $this->getParam($input, 'php_date_format');
-        if(!empty($this->getParam($input, 'checkin')) && $this->helper->custom_strtotime($this->getParam($input, 'checkin'), $php_date_format)) {
-            $data['st_date'] = date(env('PHP_DATE_FORMAT'),$this->helper->custom_strtotime($this->getParam($input, 'checkin'), $php_date_format));
-            $data['checkin'] = date(env('PHP_DATE_FORMAT'),$this->helper->custom_strtotime($this->getParam($input, 'checkin'), $php_date_format));
+        if (!empty($this->getParam($input, 'checkin')) && $this->helper->custom_strtotime($this->getParam($input, 'checkin'), $php_date_format)) {
+            $data['st_date'] = date(env('PHP_DATE_FORMAT'), $this->helper->custom_strtotime($this->getParam($input, 'checkin'), $php_date_format));
+            $data['checkin'] = date(env('PHP_DATE_FORMAT'), $this->helper->custom_strtotime($this->getParam($input, 'checkin'), $php_date_format));
         } else {
             $data['checkin'] = null;
             $data['st_date'] = null;
-        } 
+        }
 
-        if(!empty($this->getParam($input, 'checkout')) && $this->helper->custom_strtotime($this->getParam($input, 'checkout'), $php_date_format)) {
-            $data['end_date'] = date(env('PHP_DATE_FORMAT'),$this->helper->custom_strtotime($this->getParam($input, 'checkout'), $php_date_format));
-            $data['checkout'] = date(env('PHP_DATE_FORMAT'),$this->helper->custom_strtotime($this->getParam($input, 'checkout'), $php_date_format));
+        if (!empty($this->getParam($input, 'checkout')) && $this->helper->custom_strtotime($this->getParam($input, 'checkout'), $php_date_format)) {
+            $data['end_date'] = date(env('PHP_DATE_FORMAT'), $this->helper->custom_strtotime($this->getParam($input, 'checkout'), $php_date_format));
+            $data['checkout'] = date(env('PHP_DATE_FORMAT'), $this->helper->custom_strtotime($this->getParam($input, 'checkout'), $php_date_format));
         } else {
             $data['end_date'] = null;
             $data['checkout'] = null;
-        }    
-        
+        }
+
         $data['location']           = $this->getParam($input, 'location');
-        $data['guest']              = $this->getParam($input, 'guests')=='' ? 1 : $this->getParam($input, 'guests');
+        $data['guest']              = $this->getParam($input, 'guests') == '' ? 1 : $this->getParam($input, 'guests');
         $data['bedrooms']           = $this->getParam($input, 'bedrooms');
         $data['bathrooms']          = $this->getParam($input, 'bathrooms');
         $data['beds']               = $this->getParam($input, 'beds');
@@ -113,14 +113,14 @@ class SearchController extends Controller
         $data['max_price']          = $this->getParam($input, 'max_price');
         $data['instant_book']       = $this->getParam($input, 'instant_book') ? $this->getParam($input, 'instant_book') : 0;
         $data['property_id']        = $this->getParam($input, 'property_id') ? $this->getParam($input, 'property_id') : '';
-        
+
         $data['room_type']          = RoomType::dropdown();
-        $data['room_types']         = RoomType::where('status','Active')->get();
+        $data['room_types']         = RoomType::where('status', 'Active')->get();
         $data['property_type_dropdown']      = PropertyType::active_all();
         $data['amenities']          = Amenities::activeType()->active()->get();
         $data['amenities_type']     = AmenitiesType::active_all();
-        
-        $data['property_type_selected'] =$this->getParam($input, 'property_type');
+
+        $data['property_type_selected'] = $this->getParam($input, 'property_type');
         $data['room_type_selected'] = $this->getParam($input, 'room_type');
         $data['amenities_selected'] = $this->getParam($input, 'amenities');
         $data['currency_symbol']    = Currency::find(1)->symbol;
@@ -128,23 +128,22 @@ class SearchController extends Controller
         $data['default_min_price'] = $this->payment_helper->currency_convert('USD', $currency, 10);
         $data['default_max_price'] = $this->payment_helper->currency_convert('USD', $currency, 5000);
 
-        if(!$data['min_price'])
-        {
+        if (!$data['min_price']) {
             $data['min_price'] = $data['default_min_price'];
             $data['max_price'] = $data['default_max_price'];
-        }elseif($previous_currency){
-            $data['min_price'] = $this->payment_helper->currency_convert($previous_currency, $currency, $data['min_price']); 
-            $data['max_price'] = $this->payment_helper->currency_convert($previous_currency, $currency, $data['max_price']); 
+        } elseif ($previous_currency) {
+            $data['min_price'] = $this->payment_helper->currency_convert($previous_currency, $currency, $data['min_price']);
+            $data['max_price'] = $this->payment_helper->currency_convert($previous_currency, $currency, $data['max_price']);
         } else {
             $data['min_price'] = $this->payment_helper->currency_convert('', $currency, $data['min_price']);
             $data['max_price'] = $this->payment_helper->currency_convert('', $currency, $data['max_price']);
         }
         $data['max_price_check'] = $this->payment_helper->currency_convert('', 'USD', $data['max_price']);
-        $data['current_refinement']=$current_refinement;
+        $data['current_refinement'] = $current_refinement;
 
         // Session::forget('search_currency');
         $current_location0 = preg_replace('/\s+/', '', $request->location);
-       
+
         $current_location1 = str_replace("-", ", ", "$current_location0");
         $current_location5 = str_replace("-", ",", "$current_location0");
         $current_location = str_replace("-", " ", "$current_location1");
@@ -152,42 +151,39 @@ class SearchController extends Controller
         $data['meta_title'] = $current_location;
 
         $data['location'] = @$request->location;
-        if(is_numeric($request->location)){
+        if (is_numeric($request->location)) {
             $room = Rooms::with('rooms_address')->where('status', 'Listed')->find($request->location);
 
             $cLat  = $room->rooms_address->latitude;
             $cLong = $room->rooms_address->longitude;
-            $data['cLat'] =$cLat;
-            $data['cLong']= $cLong;
-        }
-        else if($request->location){
-            $address      = str_replace([" ","%2C"], ["+",","], "$request->location");
-            $geocode      = @file_get_contents('https://maps.google.com/maps/api/geocode/json?key='.env('GOOGLE_MAP_API').'&address='.$address.'&sensor=false&libraries=places');
+            $data['cLat'] = $cLat;
+            $data['cLong'] = $cLong;
+        } else if ($request->location) {
+            $address      = str_replace([" ", "%2C"], ["+", ","], "$request->location");
+            $geocode      = @file_get_contents('https://maps.google.com/maps/api/geocode/json?key=' . env('GOOGLE_MAP_API') . '&address=' . $address . '&sensor=false&libraries=places');
             $json         = json_decode($geocode);
-        }
-        else{
+        } else {
             $user_ip = $_SERVER['REMOTE_ADDR'];
-            if($user_ip == '127.0.0.1'){
+            if ($user_ip == '127.0.0.1') {
                 $externalContent = file_get_contents('http://checkip.dyndns.com/');
                 preg_match('/Current IP Address: \[?([:.0-9a-fA-F]+)\]?/', $externalContent, $m);
                 $user_ip = $m[1];
             }
-            $url = json_decode(file_get_contents("http://ipinfo.io/$user_ip/?key=".env('IP_INFO_KEY')));
-            $geocode      = @file_get_contents('https://maps.google.com/maps/api/geocode/json?key='.env('GOOGLE_MAP_API').'&latlng='.$url->loc.'&sensor=false&libraries=places');
+            $url = json_decode(file_get_contents("http://ipinfo.io/$user_ip/?key=" . env('IP_INFO_KEY')));
+            $geocode      = @file_get_contents('https://maps.google.com/maps/api/geocode/json?key=' . env('GOOGLE_MAP_API') . '&latlng=' . $url->loc . '&sensor=false&libraries=places');
             $json         = json_decode($geocode);
         }
 
-        if(@$json->{'results'})
-        {
+        if (@$json->{'results'}) {
             $cLat  = $json->{'results'}[0]->{'geometry'}->{'location'}->{'lat'};
             $cLong = $json->{'results'}[0]->{'geometry'}->{'location'}->{'lng'};
-            $data['cLat'] =$cLat;
-            $data['cLong']= $cLong;
+            $data['cLat'] = $cLat;
+            $data['cLong'] = $cLong;
         }
-       
+
         return $data;
     }
-    
+
     function searchexperienceResult(Request $request)
     {
         $input = $request->json()->all();
@@ -196,71 +192,62 @@ class SearchController extends Controller
         $currency = Session::get('currency');
         $full_address  = $this->getParam($input, 'location');
 
-      
+
         $checkin       = $this->getParam($input, 'checkin');
-      
+
         $checkout      = $this->getParam($input, 'checkout');
         $guest         = $this->getParam($input, 'guest');
         $host_experience_category = $this->getParam($input, 'host_experience_category');
         $min_price     = $this->getParam($input, 'min_price');
         $max_price     = $this->getParam($input, 'max_price');
         $map_details   = $this->getParam($input, 'map_details');
-        
+
         $data['viewport'] = '';
 
-        if(!$min_price)
-        {
+        if (!$min_price) {
             $min_price = $this->payment_helper->currency_convert('USD', '', 0);
             $max_price = $this->payment_helper->currency_convert('USD', '', 5000);
         }
-        
-        if(!is_array($host_experience_category))
-        {
-            if($host_experience_category != '')
-             $host_experience_category = explode(',', $host_experience_category);
+
+        if (!is_array($host_experience_category)) {
+            if ($host_experience_category != '')
+                $host_experience_category = explode(',', $host_experience_category);
             else
-             $host_experience_category = [];
+                $host_experience_category = [];
         }
-        
-       
+
+
 
         $property_type_val   = [];
         $category_val   = [];
         $rooms_whereIn       = [];
         $room_type_val       = [];
         $rooms_address_where = [];
-        
-        $address      = str_replace([" ","%2C"], ["+",","], "$full_address");
-        $geocode      = @file_get_contents('https://maps.google.com/maps/api/geocode/json?key='.env('GOOGLE_MAP_API').'&address='.$address.'&sensor=false&libraries=places');
+
+        $address      = str_replace([" ", "%2C"], ["+", ","], "$full_address");
+        $geocode      = @file_get_contents('https://maps.google.com/maps/api/geocode/json?key=' . env('GOOGLE_MAP_API') . '&address=' . $address . '&sensor=false&libraries=places');
         $json         = json_decode($geocode);
-        
-        if(@$json->results);
-        {
-        foreach($json->results as $result)
-        {
-            foreach($result->address_components as $addressPart)
-            {
-                if((in_array('locality', $addressPart->types)) && (in_array('political', $addressPart->types)))
-                {
-                    $city1 = $addressPart->long_name;
-                    $rooms_address_where['host_experience_location.city'] = $city1;
-                }
-                if((in_array('administrative_area_level_1', $addressPart->types)) && (in_array('political', $addressPart->types)))
-                {
-                    $state = $addressPart->long_name;
-                    $rooms_address_where['host_experience_location.state'] = $state;
-                }
-                if((in_array('country', $addressPart->types)) && (in_array('political', $addressPart->types)))
-                {
-                    $country = $addressPart->short_name;
-                    $rooms_address_where['host_experience_location.country'] = $country;
+
+        if (@$json->results); {
+            foreach ($json->results as $result) {
+                foreach ($result->address_components as $addressPart) {
+                    if ((in_array('locality', $addressPart->types)) && (in_array('political', $addressPart->types))) {
+                        $city1 = $addressPart->long_name;
+                        $rooms_address_where['host_experience_location.city'] = $city1;
+                    }
+                    if ((in_array('administrative_area_level_1', $addressPart->types)) && (in_array('political', $addressPart->types))) {
+                        $state = $addressPart->long_name;
+                        $rooms_address_where['host_experience_location.state'] = $state;
+                    }
+                    if ((in_array('country', $addressPart->types)) && (in_array('political', $addressPart->types))) {
+                        $country = $addressPart->short_name;
+                        $rooms_address_where['host_experience_location.country'] = $country;
+                    }
                 }
             }
         }
-        }
 
-        if($map_details != '')
-        {
+        if ($map_details != '') {
             $map_detail =   explode('~', $map_details);
             $zoom       =   $map_detail[0];
             $bounds     =   $map_detail[1];
@@ -268,23 +255,20 @@ class SearchController extends Controller
             $minLong    =   $map_detail[3];
             $maxLat     =   $map_detail[4];
             $maxLong    =   $map_detail[5];
-            $cLat       =   $map_detail[6]; 
+            $cLat       =   $map_detail[6];
             $cLong      =   $map_detail[7];
 
-            if($minLong>$maxLong){
-                if($maxLong > 0){
+            if ($minLong > $maxLong) {
+                if ($maxLong > 0) {
                     $maxLong = $minLong;
-                    $minLong = "-180"; 
-                }else{
+                    $minLong = "-180";
+                } else {
                     $maxLong = "180";
                 }
             }
             // dump($zoom,$bounds,$minLat,$maxLat,$minLong,$maxLong,$cLat,$cLong);
-        }
-        else
-        {
-            if(@$json->{'results'})
-            {
+        } else {
+            if (@$json->{'results'}) {
                 // $data['lat'] = $json->{'results'}[0]->{'geometry'}->{'location'}->{'lat'};
                 // $data['long'] = $json->{'results'}[0]->{'geometry'}->{'location'}->{'lng'};
                 $data['viewport'] = $json->{'results'}[0]->{'geometry'}->{'viewport'};
@@ -293,9 +277,7 @@ class SearchController extends Controller
                 $maxLat = $json->{'results'}[0]->{'geometry'}->{'viewport'}->{'northeast'}->{'lat'};
                 $minLong = $json->{'results'}[0]->{'geometry'}->{'viewport'}->{'southwest'}->{'lng'};
                 $maxLong = $json->{'results'}[0]->{'geometry'}->{'viewport'}->{'northeast'}->{'lng'};
-            }
-            else
-            {
+            } else {
                 $data['lat'] = 0;
                 $data['long'] = 0;
 
@@ -309,7 +291,7 @@ class SearchController extends Controller
 
         $checkin  = date('Y-m-d', $this->helper->custom_strtotime($checkin));
         $checkout = date('Y-m-d', $this->helper->custom_strtotime($checkout));
-        
+
         $days     = $this->get_days($checkin, $checkout);
 
         // unset($days[count($days)-1]);
@@ -319,36 +301,37 @@ class SearchController extends Controller
         $not_available_room_ids = HostExperienceCalendar::whereIn('date', $days)->whereStatus('Not available')->distinct()->pluck('host_experience_id');
 
         $rooms_where['host_experiences.number_of_guests'] = $guest ? $guest : 1;
-        
+
         $rooms_where['host_experiences.status']       = 'Listed';
         $rooms_where['host_experiences.admin_status']       = 'Approved';
-            
-        
-        if(count($host_experience_category))
-        {                    
-            foreach($host_experience_category as $category_value)
+
+
+        if (count($host_experience_category)) {
+            foreach ($host_experience_category as $category_value)
                 array_push($category_val, $category_value);
         }
-        
+
 
         $currency_rate = Currency::where('code', Currency::find(1)->session_code)->first()->rate;
 
         $max_price_check = $this->payment_helper->currency_convert('', 'USD', $max_price);
 
-        $rooms = HostExperiences::with(['host_experience_location' => function($query) use($minLat, $maxLat, $minLong, $maxLong) { },
-                            'currency' => function($query){},
-                            'category_details' => function($query){},
-                            'user' => function($query) use($users_where) {
-                                $query->with('profile_picture')
-                                      ->where($users_where);
-                            },
-                            'saved_wishlists' => function($query) {
-                                $query->where('user_id', @Auth::user()->id);
-                            }])
-                            ->whereHas('host_experience_location', function($query) use($minLat, $maxLat, $minLong, $maxLong) {
-                                 $query->whereRaw("latitude between $minLat and $maxLat and longitude between $minLong and $maxLong");
-                            })
-                            /*->whereHas('currency',function($query) use($min_price, $max_price, $currency_rate, $max_price_check) {
+        $rooms = HostExperiences::with([
+            'host_experience_location' => function ($query) use ($minLat, $maxLat, $minLong, $maxLong) { },
+            'currency' => function ($query) { },
+            'category_details' => function ($query) { },
+            'user' => function ($query) use ($users_where) {
+                $query->with('profile_picture')
+                    ->where($users_where);
+            },
+            'saved_wishlists' => function ($query) {
+                $query->where('user_id', @Auth::user()->id);
+            }
+        ])
+            ->whereHas('host_experience_location', function ($query) use ($minLat, $maxLat, $minLong, $maxLong) {
+                $query->whereRaw("latitude between $minLat and $maxLat and longitude between $minLong and $maxLong");
+            })
+            /*->whereHas('currency',function($query) use($min_price, $max_price, $currency_rate, $max_price_check) {
                                 if($max_price_check >= 750)
                                 {
                                     $query->whereRaw('((price_per_guest / currency.rate) * '.$currency_rate.') >= '.$min_price);
@@ -357,32 +340,29 @@ class SearchController extends Controller
                                 {
                                     $query->whereRaw('((price_per_guest / currency.rate) * '.$currency_rate.') >= '.$min_price.' and ((price_per_guest / currency.rate) * '.$currency_rate.') <= '.$max_price);
                                 }
-                            }) */                          
-                            ->whereHas('user', function($query) use($users_where) {
-                                $query->where($users_where);
-                            })
-                            // ->whereNotIn('id', $not_available_room_ids)
-                            ->daysAvailable($days, $guest);
-        if($rooms_where)
-        {
-            foreach($rooms_where as $row=>$value)
-            {
-                if($row == 'host_experiences.number_of_guests')
+                            }) */
+            ->whereHas('user', function ($query) use ($users_where) {
+                $query->where($users_where);
+            })
+            // ->whereNotIn('id', $not_available_room_ids)
+            ->daysAvailable($days, $guest);
+        if ($rooms_where) {
+            foreach ($rooms_where as $row => $value) {
+                if ($row == 'host_experiences.number_of_guests')
                     $operator = '>=';
                 else
                     $operator = '=';
 
-                if($value == '')
+                if ($value == '')
                     $value = 0;
 
                 $rooms = $rooms->where($row, $operator, $value);
             }
         }
-        if(count($host_experience_category))
-        {                    
-            $rooms = $rooms->where(function($query) use($category_val) {
-                $query->whereIn('category',$category_val);
-                $query->orwhereIn('secondary_category',$category_val);
+        if (count($host_experience_category)) {
+            $rooms = $rooms->where(function ($query) use ($category_val) {
+                $query->whereIn('category', $category_val);
+                $query->orwhereIn('secondary_category', $category_val);
             });
         }
         $rooms = $rooms->orderByRaw('RAND(1234)')->paginate(18)->toJson();
@@ -390,18 +370,19 @@ class SearchController extends Controller
     }
 
 
-	/**
-	 * Ajax Search Result
-	 *
-	 * @param \Illuminate\Http\Request $request Input values
-	 * @return void Search results
-	 */
+    /**
+     * Ajax Search Result
+     *
+     * @param \Illuminate\Http\Request $request Input values
+     * @return void Search results
+     */
 
-    public function searchResultOnMap(Request $request){
+    public function searchResultOnMap(Request $request)
+    {
         $input = $request->json()->all();
 
         $full_address  = $this->getParam($input, 'location');
-        
+
         $map_details   = $this->getParam($input, 'map_details');
         $checkin       = $this->getParam($input, 'checkin');
         $checkout      = $this->getParam($input, 'checkout');
@@ -417,36 +398,33 @@ class SearchController extends Controller
         $instant_book  = $this->getParam($input, 'instant_book');
         $property_id   = $this->getParam($input, 'property_id');
         $limit_distance     = $this->getParam($input, 'limit_distance');
-        
-        if(!is_array($room_type))
-        {
-            if($room_type != '')
-             $room_type = explode(',', $room_type);
+
+        if (!is_array($room_type)) {
+            if ($room_type != '')
+                $room_type = explode(',', $room_type);
             else
-             $room_type = [];
+                $room_type = [];
         }
         //
-        if(!is_array($property_type))
-        {
-            if($property_type != '')
-             $property_type = explode(',', $property_type);
+        if (!is_array($property_type)) {
+            if ($property_type != '')
+                $property_type = explode(',', $property_type);
             else
-             $property_type = [];
+                $property_type = [];
         }
 
-        if(!is_array($amenities))
-        {
-            if($amenities != '')
-             $amenities = explode(',', $amenities);
+        if (!is_array($amenities)) {
+            if ($amenities != '')
+                $amenities = explode(',', $amenities);
             else
-             $amenities = [];
+                $amenities = [];
         }
 
         $property_type_val   = [];
         $room_type_val       = [];
         $rooms_whereIn       = [];
         $cLat = $full_address['center']['lat'];
-        $cLong =$full_address['center']['lng'];
+        $cLong = $full_address['center']['lng'];
 
         $minLat = $full_address['southWest']['lat'];
         $maxLat = $full_address['northEast']['lat'];
@@ -456,33 +434,34 @@ class SearchController extends Controller
         // dd($full_address);
         $checkin  = date('Y-m-d', $this->helper->custom_strtotime($checkin));
         $checkout = date('Y-m-d', $this->helper->custom_strtotime($checkout));
-        $dates_available = ($this->getParam($input, 'checkin') !='');
+        $dates_available = ($this->getParam($input, 'checkin') != '');
         $days     = $this->get_days($checkin, $checkout);
-        unset($days[count($days)-1]);
+        unset($days[count($days) - 1]);
         $total_nights = count($days);
 
         $total_weekends = 0;
-        foreach($days as $day) {
+        foreach ($days as $day) {
             $weekday = date('N', strtotime($day));
-            if( in_array($weekday, [5,6]) ) {
+            if (in_array($weekday, [5, 6])) {
                 $total_weekends++;
             }
         }
-        $total_guests                       = $guest-0;
+        $total_guests                       = $guest - 0;
 
         $max_price_check = $this->payment_helper->currency_convert('', 'USD', $max_price);
 
         $not_available_room_ids = [];
-        $not_available_room_ids = Calendar::daysNotAvailable($days, $total_guests);//->distinct()->pluck('room_id')->toArray();
+        $not_available_room_ids = Calendar::daysNotAvailable($days, $total_guests); //->distinct()->pluck('room_id')->toArray();
         $not_available_room_ids = array_unique($not_available_room_ids);
         // $rooms = Rooms::with(['rooms_address',
         // 'users' => function($query) {
         //     $query->with('profile_picture');
         // }, 'rooms_price']);
-        $rooms =DB::table('rooms')->select('rooms.id',
-        'rooms_address.latitude as lat',
-         'rooms_address.longitude as lng'
-        
+        $rooms = DB::table('rooms')->select(
+            'rooms.id',
+            'rooms_address.latitude as lat',
+            'rooms_address.longitude as lng'
+
         );
         $rooms = $rooms->whereNotIn('rooms.id', $not_available_room_ids);
         $cenLat = ($minLat + $maxLat) / 2;
@@ -494,38 +473,36 @@ class SearchController extends Controller
         $rooms = $rooms->join('subscriptions', 'rooms.user_id', '=', 'subscriptions.user_id');
         $rooms = $rooms->join('rooms_price', 'rooms.id', '=', 'rooms_price.room_id');
         $rooms = $rooms->join('membershiptypes', 'membershiptypes.Name', '=', 'subscriptions.name');
-        
-        
-        $rooms->where( "subscriptions.ends_at" , ">=", DB::raw("'$date'"));
-        $rooms->where( "rooms.subscription_end_date" , ">=", DB::raw("'$date'"));
-        $rooms->where( "rooms.subscription_start_date" , "<=", DB::raw("'$date'"));
-        $rooms->where( "rooms.subscription_start_date" , "!=", DB::raw("0000-00-00"));
+
+
+        $rooms->where("subscriptions.ends_at", ">=", DB::raw("'$date'"));
+        $rooms->where("rooms.subscription_end_date", ">=", DB::raw("'$date'"));
+        $rooms->where("rooms.subscription_start_date", "<=", DB::raw("'$date'"));
+        $rooms->where("rooms.subscription_start_date", "!=", DB::raw("0000-00-00"));
         // dd($minLat, $maxLat, $minLong, $maxLong);
         $rooms->whereRaw(" rooms_address.latitude between '$minLat' and '$maxLat' and rooms_address.longitude between '$minLong' and '$maxLong' ");
-        if(isset($searchCountry)){
+        if (isset($searchCountry)) {
             $rooms = $rooms->whereRaw("country = '$searchCountry'");
         }
         $property_type = array_values($property_type);
-        if(count($property_type))
-        {
+        if (count($property_type)) {
             $rooms = $rooms->whereIn('rooms.property_type', $property_type);
         }
-        if(count($amenities))
-        {
-            foreach($amenities as $amenities_value)
-            {
-                $rooms = $rooms->whereRaw('find_in_set('.$amenities_value.', rooms.amenities)');
+        if (count($amenities)) {
+            foreach ($amenities as $amenities_value) {
+                $rooms = $rooms->whereRaw('find_in_set(' . $amenities_value . ', rooms.amenities)');
             }
         }
-        $rooms = $rooms->where('rooms.accommodates' , '>=', $guest);
-        $rooms = $rooms->where('rooms_price.night' , '>=', $min_price);
-        $rooms = $rooms->where('rooms_price.night' , '<=', $max_price);
+        $rooms = $rooms->where('rooms.accommodates', '>=', $guest);
+        $rooms = $rooms->where('rooms_price.night', '>=', $min_price);
+        $rooms = $rooms->where('rooms_price.night', '<=', $max_price);
         $rooms = $rooms->orderBy('membershiptypes.annual_fee', 'desc');
         $rooms->groupBy('rooms.id');
-        
-        return($rooms->get());
+
+        return ($rooms->get());
     }
-    public function searchResult(Request $request){
+    public function searchResult(Request $request)
+    {
 
         $input = $request->json()->all();
 
@@ -547,44 +524,43 @@ class SearchController extends Controller
         $limit_distance = $this->getParam($input, 'limit_distance');
         $search_option  = $this->getParam($input, 'searchOption');
 
-        if(is_numeric ($full_address)){
+        if (is_numeric($full_address)) {
             $roomId = $full_address;
-            $rooms = Rooms::with(['rooms_address','rooms_price'
+            $rooms = Rooms::with([
+                'rooms_address', 'rooms_price'
             ]);
-                $rooms = $rooms->select('rooms.*',
+            $rooms = $rooms->select(
+                'rooms.*',
                 'rooms_address.*',
                 'rooms.subscription_end_date as ends_at',
                 'membershiptypes.Name as membership_name',
                 DB::raw('avg(rating) as avg_rating, count(reviews.room_id) as review_count')
             );
-            
+
             $rooms = $rooms->join('rooms_address', 'rooms.id', '=', 'rooms_address.room_id');
             $rooms = $rooms->leftJoin('reviews', 'reviews.room_id', '=', 'rooms.id');
             $rooms = $rooms->join('rooms_price', 'rooms.id', '=', 'rooms_price.room_id');
             $rooms = $rooms->leftJoin('membershiptypes', 'membershiptypes.id', '=', 'rooms.plan_type');
-            $rooms->where( "rooms.id" , "=", "$roomId")
+            $rooms->where("rooms.id", "=", "$roomId")
                 ->where('rooms.status', 'Listed');
-                
-            return($rooms->paginate(10));
+
+            return ($rooms->paginate(10));
         }
-        if(!is_array($room_type))
-        {
-            if($room_type != '')
+        if (!is_array($room_type)) {
+            if ($room_type != '')
                 $room_type = explode(',', $room_type);
             else
                 $room_type = [];
         }
-        if(!is_array($property_type))
-        {
-            if($property_type != '')
+        if (!is_array($property_type)) {
+            if ($property_type != '')
                 $property_type = explode(',', $property_type);
             else
                 $property_type = [];
         }
 
-        if(!is_array($amenities))
-        {
-            if($amenities != '')
+        if (!is_array($amenities)) {
+            if ($amenities != '')
                 $amenities = explode(',', $amenities);
             else
                 $amenities = [];
@@ -593,29 +569,26 @@ class SearchController extends Controller
         $property_type_val   = [];
         $room_type_val       = [];
         $rooms_whereIn       = [];
+        if ($search_option == 'address') {
 
-        if($search_option == 'address'){
-            
-            if($full_address){                
-                $address      = str_replace([" ","%2C"], ["+",","], "$full_address");
-                $geocode      = @file_get_contents('https://maps.google.com/maps/api/geocode/json?key='.env('GOOGLE_MAP_API').'&address='.$address.'&sensor=false&libraries=places');
+            if ($full_address) {
+                $address      = str_replace([" ", "%2C"], ["+", ","], "$full_address");
+                $geocode      = @file_get_contents('https://maps.google.com/maps/api/geocode/json?key=' . env('GOOGLE_MAP_API') . '&address=' . $address . '&sensor=false&libraries=places');
                 $json         = json_decode($geocode);
-            }
-            else{
+            } else {
                 $user_ip = $_SERVER['REMOTE_ADDR'];
-                if($user_ip == '127.0.0.1'){
+                if ($user_ip == '127.0.0.1') {
                     $externalContent = file_get_contents('http://checkip.dyndns.com/');
                     preg_match('/Current IP Address: \[?([:.0-9a-fA-F]+)\]?/', $externalContent, $m);
                     $user_ip = $m[1];
                 }
-                $url = json_decode(file_get_contents("http://ipinfo.io/$user_ip/?key=".env('IP_INFO_KEY')));
-                $geocode      = @file_get_contents('https://maps.google.com/maps/api/geocode/json?key='.env('GOOGLE_MAP_API').'&latlng='.$url->loc.'&sensor=false&libraries=places');
+                $url = json_decode(file_get_contents("http://ipinfo.io/$user_ip/?key=" . env('IP_INFO_KEY')));
+                $geocode      = @file_get_contents('https://maps.google.com/maps/api/geocode/json?key=' . env('GOOGLE_MAP_API') . '&latlng=' . $url->loc . '&sensor=false&libraries=places');
                 $json         = json_decode($geocode);
             }
 
-            if(@$json->{'results'})
-            {
-                
+            if (@$json->{'results'}) {
+
                 $cLat  = $json->{'results'}[0]->{'geometry'}->{'location'}->{'lat'};
                 $cLong = $json->{'results'}[0]->{'geometry'}->{'location'}->{'lng'};
 
@@ -624,10 +597,9 @@ class SearchController extends Controller
                 $minLong = $json->{'results'}[0]->{'geometry'}->{'viewport'}->{'southwest'}->{'lng'};
                 $maxLong = $json->{'results'}[0]->{'geometry'}->{'viewport'}->{'northeast'}->{'lng'};
 
-                foreach($json->{'results'}[0]->{'address_components'} as $component){
-                    if($component->{'types'}[0] == 'country'){
+                foreach ($json->{'results'}[0]->{'address_components'} as $component) {
+                    if ($component->{'types'}[0] == 'country') {
                         $searchCountry = $component->{'short_name'};
-                        
                     }
                 }
                 //apply map tolerence
@@ -635,9 +607,7 @@ class SearchController extends Controller
                 $maxLat += $this->map_tolerence;
                 $minLong -= $this->map_tolerence;
                 $maxLong += $this->map_tolerence;
-            }
-            else
-            {
+            } else {
                 $cLat = 0;
                 $cLong = 0;
 
@@ -646,49 +616,47 @@ class SearchController extends Controller
                 $minLong = -1000;
                 $maxLong = 1000;
             }
-        }
-        else {
+        } else {
             $cLat = $full_address['center']['lat'];
-            $cLong =$full_address['center']['lng'];
-    
+            $cLong = $full_address['center']['lng'];
+
             $minLat = isset($full_address['southWest']['lat']) ? $full_address['southWest']['lat'] : -1000;
             $maxLat = isset($full_address['northEast']['lat']) ? $full_address['northEast']['lat'] : 1000;
             $minLong = isset($full_address['southWest']['lng']) ? $full_address['southWest']['lng'] : -1000;
             $maxLong = isset($full_address['northEast']['lng']) ? $full_address['northEast']['lng'] : 1000;
-
         }
 
         $checkin  = $checkin != "" ? date('Y-m-d', $this->helper->custom_strtotime($checkin)) : "";
         $checkout = $checkout != "" ? date('Y-m-d', $this->helper->custom_strtotime($checkout)) : "";
-        $dates_available = ($this->getParam($input, 'checkin') !='');
+        $dates_available = ($this->getParam($input, 'checkin') != '');
         $days     = $this->get_days($checkin, $checkout);
-        unset($days[count($days)-1]);
+        unset($days[count($days) - 1]);
         $total_nights = count($days);
-       
+
         $total_weekends = 0;
-        foreach($days as $day) {
+        foreach ($days as $day) {
             $weekday = date('N', strtotime($day));
-            if( in_array($weekday, [5,6]) ) {
+            if (in_array($weekday, [5, 6])) {
                 $total_weekends++;
             }
         }
-        $total_guests = $guest-0;
+        $total_guests = $guest - 0;
 
         $max_price_check = $this->payment_helper->currency_convert('', 'USD', $max_price);
 
         $not_available_room_ids = [];
-        
-        $not_available_room_ids = Calendar::daysNotAvailable($days, $total_guests);//->distinct()->pluck('room_id')->toArray();
-        $not_available_room_ids = array_unique($not_available_room_ids);
-        
-        $rooms = Rooms::with(['rooms_price'])->select('rooms.*',
-         'rooms_address.*',
-         'rooms.subscription_end_date as ends_at',
-         'membershiptypes.Name as membership_name',
-         DB::raw("'$cLong' as key_longitude, '$cLat' as key_latitude"),
-         DB::raw('avg(rating) as avg_rating, count(reviews.room_id) as review_count')
-        );
 
+        $not_available_room_ids = Calendar::daysNotAvailable($days, $total_guests); //->distinct()->pluck('room_id')->toArray();
+        $not_available_room_ids = array_unique($not_available_room_ids);
+
+        $rooms = Rooms::with(['rooms_price'])->select(
+            'rooms.*',
+            'rooms_address.*',
+            'rooms.subscription_end_date as ends_at',
+            'membershiptypes.Name as membership_name',
+            DB::raw("'$cLong' as key_longitude, '$cLat' as key_latitude"),
+            DB::raw('avg(rating) as avg_rating, count(reviews.room_id) as review_count')
+        );
 
         $rooms = $rooms->whereNotIn('rooms.id', $not_available_room_ids);
 
@@ -700,7 +668,7 @@ class SearchController extends Controller
         $cenLat = ($minLat + $maxLat) / 2;
         $cenLong = ($minLong + $maxLong) / 2;
         $date = date('Y-m-d');
-        $rooms = $rooms->whereRaw( " 
+        $rooms = $rooms->whereRaw(" 
             rooms.status ='Listed' and 
             rooms.subscription_end_date >='$date' and 
             rooms.subscription_start_date <= '$date' and 
@@ -710,18 +678,18 @@ class SearchController extends Controller
             rooms_price.night >= '$min_price' and
             rooms_price.night <= '$max_price' 
         ");
-        
-        if(@$json->{'results'}){
-            foreach($json->{'results'}[0]->{'address_components'} as $component){
-                if($component->{'types'}[0] == 'country'){
-                     
+
+        if (@$json->{'results'}) {
+            foreach ($json->{'results'}[0]->{'address_components'} as $component) {
+                if ($component->{'types'}[0] == 'country') {
+
                     $searchCountry = $component->{'short_name'};
                 }
-                if($component->{'types'}[0] == 'administrative_area_level_1'){
+                if ($component->{'types'}[0] == 'administrative_area_level_1') {
                     $searchState = $component->{'long_name'};
                     $searchState1 = $component->{'short_name'};
                 }
-                if($component->{'types'}[0] == 'locality'){
+                if ($component->{'types'}[0] == 'locality') {
                     $searchCity = $component->{'short_name'};
                     $searchCity1 = $component->{'long_name'};
                 }
@@ -729,29 +697,26 @@ class SearchController extends Controller
         }
 
         $property_type = array_values($property_type);
-        if(count($property_type))
-        {
+        if (count($property_type)) {
             $rooms = $rooms->whereIn('rooms.property_type', $property_type);
         }
-        if(count($amenities))
-        {
-            foreach($amenities as $amenities_value)
-            {
-                $rooms = $rooms->whereRaw('find_in_set('.$amenities_value.', rooms.amenities)');
+        if (count($amenities)) {
+            foreach ($amenities as $amenities_value) {
+                $rooms = $rooms->whereRaw('find_in_set(' . $amenities_value . ', rooms.amenities)');
             }
         }
 
         $rooms = $rooms->orderBy('rooms.plan_type');
-        if(isset($searchCountry)) {
+        if (isset($searchCountry)) {
             $rooms = $rooms->orderByRaw("FIELD(rooms_address.country , '$searchCountry'  , '*') ASC");;
         }
-        if(isset($searchState)) {
+        if (isset($searchState)) {
             $rooms = $rooms->orderByRaw("FIELD(rooms_address.state , '$searchState', '$searchState1') ASC");;
         }
-        if(isset($searchCity)) {
+        if (isset($searchCity)) {
             $rooms = $rooms->orderByRaw("FIELD(rooms_address.city , '$searchCity', '$searchCity1') ASC");;
         }
-        
+
         // if(isset($request->page) && $request->page != 1){
         //     if ($request->session()->has('randomOrder')) {
         //         $randomOrder = session('randomOrder');
@@ -769,60 +734,61 @@ class SearchController extends Controller
         //     $rooms = $rooms->orderBy(DB::raw("RAND($randomOrder)"));
         // }
 
-        $randomOrder = mt_rand() ;
+        $randomOrder = mt_rand();
         $rooms = $rooms->orderBy(DB::raw("RAND($randomOrder)"));
         $rooms->groupBy('rooms.id');
-
         return $rooms->paginate(10);
 
         // return response()->json(array('status' => $array, 'data' => []));
         // return response()->json($rooms->paginate(50));
     }
 
-	/**
-	 * Get distance between two points
-	 * @param $lat1
-	 * @param $lon1
-	 * @param $lat2
-	 * @param $lon2
-	 * @return float $distance      Between two points
-	 */
-    public function calcDistances($lat1, $lon1, $lat2, $lon2) {
-         // ACOS(SIN(lat1)*SIN(lat2)+COS(lat1)*COS(lat2)*COS(lon2-lon1))*6371
-         // Convert lattitude/longitude (degrees) to radians for calculations
-         $R = 3963.189; // meters
-         
-         // Find the deltas
-         $delta_lon = $this->deg2rad($lon2) - $this->deg2rad($lon1);
-         
-         // Find the Great Circle distance
-         $distance = acos(sin($this->deg2rad($lat1)) * sin($this->deg2rad($lat2)) + cos($this->deg2rad($lat1)) * cos($this->deg2rad($lat2)) *
-         cos($delta_lon)) * 3963.189;         
-         
-         return $distance;
+    /**
+     * Get distance between two points
+     * @param $lat1
+     * @param $lon1
+     * @param $lat2
+     * @param $lon2
+     * @return float $distance      Between two points
+     */
+    public function calcDistances($lat1, $lon1, $lat2, $lon2)
+    {
+        // ACOS(SIN(lat1)*SIN(lat2)+COS(lat1)*COS(lat2)*COS(lon2-lon1))*6371
+        // Convert lattitude/longitude (degrees) to radians for calculations
+        $R = 3963.189; // meters
+
+        // Find the deltas
+        $delta_lon = $this->deg2rad($lon2) - $this->deg2rad($lon1);
+
+        // Find the Great Circle distance
+        $distance = acos(sin($this->deg2rad($lat1)) * sin($this->deg2rad($lat2)) + cos($this->deg2rad($lat1)) * cos($this->deg2rad($lat2)) *
+            cos($delta_lon)) * 3963.189;
+
+        return $distance;
     }
 
-	/**
-	 * @param $val
-	 *
-	 * @return float|int
-	 */
-	/**
-	 * @param $val
-	 *
-	 * @return float|int
-	 */
-	/**
-	 * @param $val
-	 *
-	 * @return float|int
-	 */
-	public function deg2rad($val) {
+    /**
+     * @param $val
+     *
+     * @return float|int
+     */
+    /**
+     * @param $val
+     *
+     * @return float|int
+     */
+    /**
+     * @param $val
+     *
+     * @return float|int
+     */
+    public function deg2rad($val)
+    {
         $pi = pi();
-        $de_ra = (floatval($val)*($pi/180));
+        $de_ra = (floatval($val) * ($pi / 180));
         return $de_ra;
     }
- 
+
     /**
      * Get days between two dates
      *
@@ -831,43 +797,41 @@ class SearchController extends Controller
      * @return array $days      Between two dates
      */
     public function get_days($sStartDate, $sEndDate)
-    {            
-        $aDays[]      = $sStartDate;  
-        $sCurrentDate = $sStartDate;  
-        while($sCurrentDate < $sEndDate)
-        {
-            $sCurrentDate = gmdate("Y-m-d", strtotime("+1 day", strtotime($sCurrentDate)));  
-            $aDays[]      = $sCurrentDate;  
+    {
+        $aDays[]      = $sStartDate;
+        $sCurrentDate = $sStartDate;
+        while ($sCurrentDate < $sEndDate) {
+            $sCurrentDate = gmdate("Y-m-d", strtotime("+1 day", strtotime($sCurrentDate)));
+            $aDays[]      = $sCurrentDate;
         }
-      
+
         return $aDays;
     }
 
-	/**
-	 * Get rooms photo details
-	 *
-	 * @param \Illuminate\Http\Request $request Input values
-	 * @return json $rooms_photo    Rooms Photos Details
-	 */
+    /**
+     * Get rooms photo details
+     *
+     * @param \Illuminate\Http\Request $request Input values
+     * @return json $rooms_photo    Rooms Photos Details
+     */
     public function rooms_photos(Request $request)
-    {            
+    {
         $rooms_id  = $request->rooms_id;
-        $roomsDetails =  RoomsPhotos::where('room_id', $request->rooms_id)->orderBy('order','desc')->get();
+        $roomsDetails =  RoomsPhotos::where('room_id', $request->rooms_id)->orderBy('order', 'desc')->get();
 
         return json_encode($roomsDetails);
     }
 
-	/**
-	 * Get host experience photo details
-	 *
-	 * @param \Illuminate\Http\Request $request Input values
-	 * @return json $host experience    host experience Details
-	 */
+    /**
+     * Get host experience photo details
+     *
+     * @param \Illuminate\Http\Request $request Input values
+     * @return json $host experience    host experience Details
+     */
     public function host_experience_photos(Request $request)
-    {            
+    {
         $rooms_id  = $request->rooms_id;
         $roomsDetails =  HostExperiencePhotos::where('host_experience_id', $request->rooms_id)->get();
         return json_encode($roomsDetails);
     }
-
 }

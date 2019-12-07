@@ -20,13 +20,18 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 })->name('api.getuser');
 
+ // ==============Search Page Route ================
+Route::post('/ajax/searchIndex', 'Front\SearchController@index');
+Route::post('/ajax/searchResult', 'Front\SearchController@searchResult');
+Route::post('/ajax/searchResultOnMap', 'Front\SearchController@searchResultOnMap');
+Route::post('/ajax/searchMapRooms', 'Front\SearchController@searchMapRooms');
+
+
+
 Route::group(['middleware' => 'api_key'], function () {
     Route::get('/getlistings', 'Api\RoomsController@getlistings');
     Route::get('/getListingDetail', 'Api\RoomsController@getListingDetail');
     Route::get('/getlistingpricedetails', 'Api\RoomsController@getlistingpricedetails');
-
-
-
 
     /**
      * Manage listing api routes
@@ -167,12 +172,6 @@ Route::get('/logout', 'Auth\LogoutController@logout');
     Route::post('/ajax/wishlist_create', 'Front\WishlistController@create');
     Route::post('/ajax/save_wishlist', 'Front\WishlistController@save_wishlist');
     Route::post('/ajax/rooms/price_calculation', 'Front\RoomsController@price_calculation');
-
-    // ==============Search Page Route ================
-    Route::post('/ajax/searchIndex', 'Front\SearchController@index');
-    Route::post('/ajax/searchResult', 'Front\SearchController@searchResult');
-    Route::post('/ajax/searchResultOnMap', 'Front\SearchController@searchResultOnMap');
-    Route::post('/ajax/searchMapRooms', 'Front\SearchController@searchMapRooms');
     
     //===============PricingPageRoute========================
     Route::get('/ajax/membershiptypes', 'Front\MembershipController@gettypes');
