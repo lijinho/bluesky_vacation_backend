@@ -1,6 +1,5 @@
 <?php
 namespace App\Http\Controllers\Front;
-use Exception;
 use App\Models\Front\PaymentGateway;
 use App\Models\Front\SubscribeList;
 use Illuminate\Http\Request;
@@ -286,7 +285,8 @@ class RoomsController extends Controller
 		$rooms_description->save(); // Store data to rooms_description table
 		return array(
 			'status' => 'success',
-			'room_id' => $rooms->id
+			'room_id' => $rooms->id,
+			'redirect_url' => 'manage-listing/'.$rooms->id.'/basics'
 		);
 	}
 	public function get_additional_charges(Request $request){
@@ -353,14 +353,12 @@ class RoomsController extends Controller
 		$data['amenities_type'] = AmenitiesType::active_all();
 		$data['plans_type']     = Subscription::active_all()->where('id', '!=', "5");     // 5 is correspoding to "No Subscription"
 		$data['room_type_is_shared']    = RoomType::where('status','Active')->pluck('is_shared', 'id');
-
 		$data['room_id']        = $request->id;
 		$data['room_step']      = $request->page;    // It will get correct view file based on page name
 		
 		$data['result']         = Rooms::check_user($request->id); // Check Room Id and User Id is correct or not
 		
 		$data['rooms_price'] = $data['result']->rooms_price;
-		
 		$data['rooms_price']['additional_charge'] = $data['result']->rooms_price ? $data['result']->rooms_price->additional_charge : '';
 		$data['currencies'] 	= Currency::all();
 		$data['rooms_status']   = RoomsStepsStatus::where('room_id',$request->id)->first();
@@ -374,11 +372,13 @@ class RoomsController extends Controller
 		$data['availability_rules_months_options'] = Rooms::getAvailabilityRulesMonthsOptions();
 		Session::forget('ajax_redirect_url');
 
+		// $data['seasonal_price_detail'] = SeasonalPrice::where([['room_id',$request->id]])->groupBy('seasonal_name')->get();
+
 		$data['not_available_days'] = Calendar::where([['room_id',$request->id], ['status', '=', 'Not available']])->groupBy('seasonal_name')->get();
 		$data['bathrooms']=RoomsBath::where('room_id',$request->id)->get();
 		$data['bedrooms']=RoomsBed::where('room_id',$request->id)->get();
-		return response()->json($data);
-		// return $data;
+		return $data;
+		return view('list_your_space.main', $data);
 	}
 	public function ajax_manage_listing(Request $request, CalendarController $calendar)
 	{
@@ -1630,8 +1630,8 @@ class RoomsController extends Controller
 	}
 	public function update_price(Request $request)
 	{
-		$data           = $request->input('data');
-
+		$data           = $request;
+		$data           = json_decode($data['data']); // AngularJS data decoding
 		foreach ($data as $key => $value)
 		{
 			if($key == 'currency_code') {
@@ -1702,8 +1702,8 @@ class RoomsController extends Controller
 			$price = new RoomsPrice;
 			
 			$price->currency_code = isset($data->currency_code) ? $data->currency_code : 'USD';
+			// $price->save();
 		}
-		
 		$price->room_id = $request->id;
 		foreach ($data as $key => $value)
 		{
@@ -2378,15 +2378,18 @@ class RoomsController extends Controller
 		->where('date', '>=', $seasonal_data->start_date)
 		->where('date', '<=', $seasonal_data->end_date)
 		->delete();
-		$ba_roomid = Rooms::find($request->id)->ba_roomid;
-		$data = [
-			"action" => "delete",
-			"rateId" => $seasonal_data->rateId,
-			"roomId" => $ba_roomid
-		];
+		
+		if (BookingHelper::isAvailable()) {
+			$ba_roomid = Rooms::find($request->id)->ba_roomid;
+			$data = [
+				"action" => "delete",
+				"rateId" => $seasonal_data->rateId,
+				"roomId" => $ba_roomid
+			];
 
-		$result = BookingHelper::setRate($data);
-		$seasonal_data->delete();
+			$result = BookingHelper::setRate($data);
+			$seasonal_data->delete();
+		}
 
 		return array(
 			'status' => 'success',
@@ -2410,19 +2413,17 @@ class RoomsController extends Controller
 		return json_encode($fetch);
 	}
 
-	public function getpublishlistings(Request $request){
+	public function getpublishlistings(Request $request) {
 		$data['room_id'] = $request->id;
-		$rooms = $data['result']  = Rooms::where('id',$request->id)->first();
+		$rooms = $data['result'] = Rooms::where('id',$request->id)->first();
 		$current_date = date('Y-m-d');
-		if($rooms->hasActiveSubscription()){
+		if($rooms->hasActiveSubscription()) {
 			$this->helper->flash_message('error',  trans('messages.plan_detail.already_list_subscribe')); // Call flash message function
 			return array(
 				'plan_types' =>  Membershiptype::orderBy('annual_fee')->get(),
 				'listings' => array(),
 				'subscribed_listings' => array()
-
 			);
-		
 		}
 		$users = User::find($rooms->user_id);
 		$user = User::find(Auth::user()->id);
@@ -2438,7 +2439,6 @@ class RoomsController extends Controller
 			if($listing->steps_count == 0 && !$listing->hasActiveSubscription()) {
 				$data['listings'][] = $listing;
 			}
-		 
 		}
 		return $data;
 	}
@@ -2448,7 +2448,7 @@ class RoomsController extends Controller
 	public function post_subscribe_property(Request $request){
 		$listing_array = array();
 		$listingIds = array();
-		foreach($request->listings as $listing){
+		foreach($request->listings as $listing) {
 			if(in_array($listing['id'], $request->publish_listings)){
 				if(isset($listing['membership_type']) && $listing['membership_type']){
 					$listing_array[] = array(
@@ -2466,34 +2466,32 @@ class RoomsController extends Controller
 				}
 			}
 		}
-	
+
 		$customerArray =  $this->stripe_helper->stripeCustomer($request->id, $request->token['id']);
-		
-		 $faild_count = 0;
-		 $success_count = 0;
-			if($customerArray['result'] == 'success'){
-				$customer = $customerArray['customer'];
-				foreach($listing_array as $key => $roomItem){
-					$room = Rooms::find($roomItem['listing_id']);
-					$subscription_plan = Membershiptype::find($roomItem['membership_type']);
-					$response1 = $this->create_stripe_subscription($room, $customer, $subscription_plan, $request->coupon_code);
-					// var_dump($response1);exit;
-					if(isset($response1) && $response1['status'] == 'failed') {
-						$faild_count ++ ;
-					}
-					else{
-						$success_count ++ ;
-					}
+		$faild_count = 0;
+		$success_count = 0;
+		if($customerArray['result'] == 'success') {
+			$customer = $customerArray['customer'];
+			foreach($listing_array as $key => $roomItem) {
+				$room = Rooms::find($roomItem['listing_id']);
+				$subscription_plan = Membershiptype::find($roomItem['membership_type']);
+				$response1 = $this->create_stripe_subscription($room, $customer, $subscription_plan, $request->coupon_code);
+				// var_dump($response1);exit;
+				if(isset($response1) && $response1['status'] == 'failed') {
+					$faild_count ++ ;
+				} else {
+					$success_count ++ ;
 				}
 			}
-			
-			return array(
-				'status' => 'success',
-				'success_count' => $success_count,
-				'failed_count' => $faild_count
-			);
+		}
+		return array(
+			'status' => 'success',
+			'success_count' => $success_count,
+			'failed_count' => $faild_count
+		);
 	}
-	public function create_stripe_subscription($room,  $customer, $plan , $coupon_code = null){
+
+	public function create_stripe_subscription($room,  $customer, $plan , $coupon_code = null) {
 			$data = array();
 			$subscriptionArray = $this->stripe_helper->stripeRoomSubscriptions($room,$customer,$plan, $coupon_code); 
 

@@ -12,237 +12,218 @@ use App\Models\Front\Currency;
 use App\Models\Front\Calendar;
 use App\Models\Front\Reservation;
 use App\Models\Front\SeasonalPrice;
-
+use DB;
 use Auth;
 
-class BookingAutomationController extends Controller
-{
+class BookingAutomationController extends Controller {
+  /*
+  * prop_id : 77044
+  * ota_password : 123456
+  * api_key : S1RJCA5214KB8355
+  * prop_key : DEJQ6XIT5IIAPXTB
+  */
+  public function createAccount(Request $request) {
+		$currentUser = User::find(Auth::id());
+		$currentUser->prop_id = $request->prop_id;
+		$currentUser->ota_password = $request->ota_password;
+		$currentUser->api_key = $request->api_key;
+		$currentUser->prop_key = $request->prop_key;
+		$currentUser->is_bin_enable = $request->is_bin_enable;
+		$currentUser->save();
+	}
 
-    /*
-    * prop_id : 77044
-    * ota_password : 123456
-    * api_key : S1RJCA5214KB8355
-    * prop_key : DEJQ6XIT5IIAPXTB
-    */
-    public function createAccount(Request $request) {
-        $currentUser = User::find(Auth::id());
-        $currentUser->prop_id = $request->prop_id;
-        $currentUser->ota_password = $request->ota_password;
-        $currentUser->api_key = $request->api_key;
-        $currentUser->prop_key = $request->prop_key;
-        $currentUser->is_bin_enable = $request->is_bin_enable;
-        $currentUser->save();
-    }
-
-    public function getPropId()
-    {
-        $user = User::find(Auth::id());
-        echo $user->prop_id;
-    }
+	public function getPropId() {
+		$user = User::find(Auth::id());
+		echo $user->prop_id;
+	}
  
-    public function getCredential()
-    {
-        $user = User::find(Auth::id());
+	public function getCredential() {
+		$user = User::find(Auth::id());
 
-        if(!isset($user->prop_id) || $user->prop_id == ''){
-            echo "Booking Acccount Credential not registered";
-        }
-        else
-        {
-            echo "prop_id: [".$user->prop_id."] ota_password: [".$user->ota_password."] api_key: [".$user->api_key."] prop_key : [".$user->prop_key."]";
-        }
-    }
+		if(!isset($user->prop_id) || $user->prop_id == '') {
+			echo "Booking Acccount Credential not registered";
+		}
+		else
+		{
+			echo "prop_id: [".$user->prop_id."] ota_password: [".$user->ota_password."] api_key: [".$user->api_key."] prop_key : [".$user->prop_key."]";
+		}
+	}
  
-    public function getBaCredential()
+  public function getBaCredential() {
+    $user = User::find(Auth::id());
+
+    if(!isset($user->prop_id) || $user->prop_id == ''){
+        return json_encode(['success' => false]);
+    }
+    else
     {
-        $user = User::find(Auth::id());
+			$data = [
+			'prop_id' => $user->prop_id,
+			'ota_password' => $user->ota_password,
+			'api_key' => $user->api_key,
+			'prop_key' => $user->prop_key,
+			'is_bin_enable' => $user->is_bin_enable,
+			];
 
-        if(!isset($user->prop_id) || $user->prop_id == ''){
-            return json_encode(['success' => false]);
-        }
-        else
-        {
-            $data = [
-                'prop_id' => $user->prop_id,
-                'ota_password' => $user->ota_password,
-                'api_key' => $user->api_key,
-                'prop_key' => $user->prop_key,
-                'is_bin_enable' => $user->is_bin_enable,
-            ];
-
-            return json_encode(['success' => true, 'data' => $data]);
-        }
+			return json_encode(['success' => true, 'data' => $data]);
     }
+  }
 
-    public function getPricing(Request $request, $roomid) {
-        
-        $response = BookingHelper::getProperty();
+  public function getPricing(Request $request, $roomid) {
+		$response = BookingHelper::getProperty();
+		$decode_res = json_decode($response, true);
+		$props = [];
+		$props[0] = $decode_res['getProperty'][0];
+		$rooms = $props[0]['roomTypes'];
+		$room_for_id = null;
+		foreach ($rooms as $key => $room) {
+			# code...
+			if($room['roomId'] == $roomid)
+			{
+				$room_for_id = $room;
+			}
+		}
 
-        $decode_res = json_decode($response, true);
-         
-        $props = [];
-        $props[0] = $decode_res['getProperty'][0];
+		$resData = null;
+		$resData['default_currency'] = $props[0]['currency'];
+		$resData['charge_per_night'] = $room_for_id['minPrice'] * 1;
+		$resData['weekly_price'] = $room_for_id['minPrice'] * 7;
+		$resData['monthly_price'] = $room_for_id['minPrice'] * 30;
+		$resData['monthly_price'] = $room_for_id['minPrice'] * 2;
+		$resData['cleaning_fee'] = $room_for_id['cleaningFee'];
+		$resData['tax_rate'] = $room_for_id['taxPercent'];
+		$resData['max_occupants'] = $room_for_id['maxPeople'];
+		$resData['base_occupants'] = 2;
 
+		$data = [
+			'default_currency' => '',
+			'charge_per_night' => '',
+			'weekly_price' => '',
+			'monthly_price' => '',
+			'weekend_price' => '',
+			'weekend_days' => '',
+			'minimum_nights' => '',
+			'cleaning_fee' => '',
+			'cleaning_fee_calc' => '',
+			'tax_rate' => '',
+			'refund_damage_fee' => '',
+			'max_occupants' => 15,
+			'base_occupants' => 5,
+			'charges_per_guest' => 10,
+			'charges_per_guest' => 5,
+		];
 
-        $rooms = $props[0]['roomTypes'];
+		dd($resData);
+		return $resData;
+	}
 
-        $room_for_id = null;
-        foreach ($rooms as $key => $room) {
-            # code...
-            if($room['roomId'] == $roomid)
-            {
-                $room_for_id = $room;
-            }
-        }
+/*
+*
+* Get property data of the current user
+*/
+	public function getProperty() {
+		$response = BookingHelper::getProperty();
+		$decode_res = json_decode($response, true);
+		$props = [];
+		$props[0] = $decode_res['getProperty'][0];
+		$rooms = $props[0]['roomTypes'];
+		$room_for_id = $rooms[0];
+		foreach ($rooms as $key => $room) {
+			# code...
+			if($room['roomId'] == "176579")
+			{
+			$room_for_id = $room;
+			}
+		}
 
-        $resData = null;
-        $resData['default_currency'] = $props[0]['currency'];
-        $resData['charge_per_night'] = $room_for_id['minPrice'] * 1;
-        $resData['weekly_price'] = $room_for_id['minPrice'] * 7;
-        $resData['monthly_price'] = $room_for_id['minPrice'] * 30;
-        $resData['monthly_price'] = $room_for_id['minPrice'] * 2;
-        $resData['cleaning_fee'] = $room_for_id['cleaningFee'];
-        $resData['tax_rate'] = $room_for_id['taxPercent'];
-        $resData['max_occupants'] = $room_for_id['maxPeople'];
-        $resData['base_occupants'] = 2;
+		dd($props[0]);
+	}
 
-        $data = [
-            'default_currency' => '',
-            'charge_per_night' => '',
-            'weekly_price' => '',
-            'monthly_price' => '',
-            'weekend_price' => '',
-            'weekend_days' => '',
-            'minimum_nights' => '',
-            'cleaning_fee' => '',
-            'cleaning_fee_calc' => '',
-            'tax_rate' => '',
-            'refund_damage_fee' => '',
-            'max_occupants' => 15,
-            'base_occupants' => 5,
-            'charges_per_guest' => 10,
-            'charges_per_guest' => 5,
-        ];
+/*
+*
+* Get room data for roomid
+*
+*/
+	public function getRoom($room_id) {
 
-        dd($resData);
-        return $resData;
-    }
+		// $room_id = "176579";
+		$response = BookingHelper::getProperty();
 
-    /*
-    *
-    * Get property data of the current user
-    */    
-    public function getProperty() {
-        $response = BookingHelper::getProperty();
+		$decode_res = json_decode($response, true);
+		
+		$props = [];
+		$props[0] = $decode_res['getProperty'][0];
 
-        $decode_res = json_decode($response, true);
-         
-        $props = [];
-        $props[0] = $decode_res['getProperty'][0];
+		$rooms = $props[0]['roomTypes'];
 
+		$room_for_id = null;
+		foreach ($rooms as $key => $room) {
+			# code...
+			if($room['roomId'] == $room_id)
+			{
+				$room_for_id = $room;
+			}
+		}
+		
+		// $room_for_id['charge_per_night'] = $props[0]['currency'];
+		dd($room_for_id);
+		return $room_for_id;
+	}
 
-        $rooms = $props[0]['roomTypes'];
+  /*
+  *
+  * Get availability
+  *
+  */
+	public function getAvailability($roomid, $start, $end) {
+		$response = BookingHelper::getAvailability($start, $end);
 
-        $room_for_id = $rooms[0];
-        foreach ($rooms as $key => $room) {
-            # code...
-            if($room['roomId'] == "176579")
-            {
-                $room_for_id = $room;
-            }
-        }
+		$decode_res = json_decode($response, true);
 
-        dd($props[0]);
-    }
+		$room_data = null;
+		foreach ($decode_res as $key => $value) {
+			# code...
+			if($key == $roomid)
+			{
+			$room_data = $value;
+			dd($value);
+			}
+		}
+		
+		return $room_data;
+  }
 
-    /*
-    *
-    * Get room data for roomid
-    *
-    */
-    public function getRoom($room_id) {
+  public function getRoomDates($room_id) {
+		$response = BookingHelper::getRoomDates($room_id);
 
-        // $room_id = "176579";
-        $response = BookingHelper::getProperty();
+		//dd($decode_res);
+		return $response;
+  }
 
-        $decode_res = json_decode($response, true);
-         
-        $props = [];
-        $props[0] = $decode_res['getProperty'][0];
+  public function getRoomStatus(Request $request) {
+		// echo "string";
+		// $rooms = Rooms::find();
+		$curreny = Currency::all();
 
+		$firstroom = Rooms::first();
+		$firstroom_price = $firstroom->room_price;
+		$room_price = RoomsPrice::where(['room_id' => 10001])->get()->first();
 
-        $rooms = $props[0]['roomTypes'];
+		$room_price->night = 0;
+		$room_price->week = 0;
+		$room_price->month = 0;
+		$room_price->cleaning = 0;
+		$room_price->tax = 0;
+		$room_price->weekend = 0;
+		$room_price->save();
 
-        $room_for_id = null;
-        foreach ($rooms as $key => $room) {
-            # code...
-            if($room['roomId'] == $room_id)
-            {
-                $room_for_id = $room;
-            }
-        }
-        
-        // $room_for_id['charge_per_night'] = $props[0]['currency'];
-        dd($room_for_id);
-        return $room_for_id;
-    }
+		dd($room_price);
+	}
 
-    /*
-    *
-    * Get availability
-    *
-    */
-    public function getAvailability($roomid, $start, $end){
-        $response = BookingHelper::getAvailability($start, $end);
-
-        $decode_res = json_decode($response, true);
-
-        $room_data = null;
-        foreach ($decode_res as $key => $value) {
-            # code...
-            if($key == $roomid)
-            {
-                $room_data = $value;
-                dd($value);
-            }
-        }
-        
-        return $room_data;
-    }
-
-    public function getRoomDates($room_id){
-        $response = BookingHelper::getRoomDates($room_id);
-
-        //dd($decode_res);
-        return $response;
-    }
-
-    public function getRoomStatus(Request $request){
-        // echo "string";
-        // $rooms = Rooms::find();
-        $curreny = Currency::all();
-
-        $firstroom = Rooms::first();
-        $firstroom_price = $firstroom->room_price;
-        $room_price = RoomsPrice::where(['room_id' => 10001])->get()->first();
-
-        $room_price->night = 0;
-        $room_price->week = 0;
-        $room_price->month = 0;
-        $room_price->cleaning = 0;
-        $room_price->tax = 0;
-        $room_price->weekend = 0;
-        $room_price->save();
-
-        dd($room_price);
-    }
-
-
-    public function getBookings()
-    {
-        $bookings = BookingHelper::getBookings();
-        dd($bookings);
-    }
+	public function getBookings() {
+		$bookings = BookingHelper::getBookings();
+		dd($bookings);
+  }
 
 	public function update() {
 		$error_status = [];
@@ -414,66 +395,50 @@ class BookingAutomationController extends Controller
 		}
   }
 
-    public function setBaRoomId(Request $request){
-        // dd($id);
-        $temp = Rooms::where(['ba_roomid' => $request['ba_roomid']])->get()->first();
-        if($temp != null)
-            return array('success' => false, 'message' => 'BA id already exists!');
-        $roomid = $request['roomid'];
-        $room = Rooms::where(['id' => $roomid, 'user_id' => Auth::id()])->get()->first();
-        $room->ba_roomid = $request['ba_roomid'];
-        $room->save();
+  public function setBaRoomId(Request $request) {
+		$temp = Rooms::where(['ba_roomid' => $request['ba_roomid']])->get()->first();
+		if($temp != null)
+			return array('success' => false, 'message' => 'BA id already exists!');
+		$roomid = $request['roomid'];
+		$room = Rooms::where(['id' => $roomid, 'user_id' => Auth::id()])->get()->first();
+		$room->ba_roomid = $request['ba_roomid'];
+		$room->save();
 
-        return array('success' => true, 'message' => 'success');
-    }
+		return array('success' => true, 'message' => 'success');
+  }
 
-    /*Get the ba_roomid for the selected room*/
-    public function getBaRoomId(Request $request){
-        $roomid = $request['roomid'];
+  /*Get the ba_roomid for the selected room*/
+  public function getBaRoomId(Request $request) {
+		$roomid = $request['roomid'];
+		$correspondRoom = Rooms::where(['id' => $roomid, 'user_id' => Auth::id()])->get()->first();
+		
+		if(!isset($correspondRoom->ba_roomid ) || $correspondRoom->ba_roomid == '')
+		{
+			return json_encode(['success' => false]);
+		} else {
+			return ['success' => true, "ba_roomid" => $correspondRoom->ba_roomid];
+		}
+  }
 
-        $correspondRoom = Rooms::where(['id' => $roomid, 'user_id' => Auth::id()])->get()->first();
+  /*Get listings that has ba_roomid*/
+  public function getListingsHasBa() {
+		$data['rooms_list'] = Rooms::user()->get();
 
-        // dd($correspondRoom);
-        
-        if(!isset($correspondRoom->ba_roomid ) || $correspondRoom->ba_roomid == '')
-        {
-            // dd('aa');
-            return json_encode(['success' => false]);
-            
-        } 
-        else
-        {
-            // dd('bb');
-            return ['success' => true, "ba_roomid" => $correspondRoom->ba_roomid];
+		return array(
+			'success' => true, 
+			'data' => $data['rooms_list']
+		);
 
-        }
+		$lists = [];
+		foreach ($data['rooms_list'] as $key => $room) {
+			# code...
+			if(isset($room->ba_roomid) && ($room->ba_roomid) != '')
+			array_push($lists, $room);
+		}
 
-        // echo "asdf";
-    }
-
-    /*Get listings that has ba_roomid*/
-    public function getListingsHasBa(){
-        $data['rooms_list'] = Rooms::user()->get();
-
-        return array(
-            'success' => true, 
-            'data' => $data['rooms_list']
-        );
-
-        $lists = [];
-        foreach ($data['rooms_list'] as $key => $room) {
-            # code...
-            if(isset($room->ba_roomid) && ($room->ba_roomid) != '')
-                array_push($lists, $room);
-
-        }
-
-        dd($lists);
-        return array(
-            'success' => true, 
-            'data' => $lists
-        );
-    }
-
-    /**/
+		return array(
+			'success' => true, 
+			'data' => $lists
+		);
+  }
 }

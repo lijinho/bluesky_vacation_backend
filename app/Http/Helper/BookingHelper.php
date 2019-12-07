@@ -28,8 +28,26 @@ class BookingHelper
      * Constructor to Set Facebook instance in Global variable
      */
 	public function __construct()
-	{	
+	{
 		
+	}
+
+	public static function isAvailable() 
+	{
+		$currentUser = User::find(Auth::id());
+
+		if ($currentUser->is_bin_enable) {
+			if(empty($currentUser->api_key) || 
+				 empty($currentUser->prop_id) || 
+				 empty($currentUser->ota_password) || 
+				 empty($currentUser->prop_key)){
+				return false;
+			}
+
+			return true;
+		}
+		
+		return false;
 	}
 
 	/**
