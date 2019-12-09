@@ -2414,17 +2414,7 @@ class RoomsController extends Controller
 	public function getpublishlistings(Request $request) {
 		$data['room_id'] = $request->id;
 		$rooms = $data['result'] = Rooms::where('id',$request->id)->first();
-		$current_date = date('Y-m-d');
 
-		// if($rooms->hasActiveSubscription()) {
-		// 	$this->helper->flash_message('error',  trans('messages.plan_detail.already_list_subscribe')); // Call flash message function
-		// 	return array(
-		// 		'plan_types' =>  Membershiptype::orderBy('annual_fee')->get(),
-		// 		'listings' => array(),
-		// 		'subscribed_listings' => array()
-		// 	);
-		// }
-		$users = User::find($rooms->user_id);
 		$user = User::find(Auth::user()->id);
 		$current_membership = $user->previous_membership();
 		$data['plan_type'] = Membershiptype::where('Name','=', $current_membership)->first();
@@ -2432,10 +2422,9 @@ class RoomsController extends Controller
 		$paymentSubscription = $rooms->paymentSubscription();
 		$data['listings'] = [];
 		$data['subscribed_listings'] = [];
-		// $data['listings'][] = $rooms;
 		$listings= Rooms::where('user_id', Auth::user()->id)->get();
 		foreach ($listings as $listing) {
-			if($listing->steps_count == 0 && !$listing->hasActiveSubscription()) {
+			if($listing->steps_count == 0) {
 				$data['listings'][] = $listing;
 			}
 		}

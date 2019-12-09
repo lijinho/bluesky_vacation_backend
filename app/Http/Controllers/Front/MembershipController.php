@@ -39,7 +39,6 @@ class MembershipController extends Controller
                 $paypal_conf['secret'])
             );
             $this->apiContext->setConfig($paypal_conf['settings']);
-            // dd($paypal_conf, $this->apiContext);
     }
     public function paypal_createplan(Request $request){
         // var_dump($request->roomId);exit;
@@ -56,7 +55,6 @@ class MembershipController extends Controller
             ->setFrequencyInterval("1")
             ->setCycles("2")
             ->setAmount(new Currency(array('value' => intval($type->annual_fee), 'currency' => 'USD')));
- 
         $merchantPreferences = new MerchantPreferences();
         $baseUrl = url('/');
         $merchantPreferences->setReturnUrl("$baseUrl/ExecuteAgreement.php?success=true")
@@ -110,7 +108,6 @@ class MembershipController extends Controller
         // Add Shipping Address
       
         $request = clone $agreement;
-        //dd($agreement);//
         try {
             $agreement = $agreement->create($this->apiContext);
             $approvalUrl = $agreement->getApprovalLink();
@@ -130,7 +127,7 @@ class MembershipController extends Controller
         $token = $request->token;
         $roomId = $request->roomId;
         $planId = $request->planId;
-        
+
 
         $agreement = new \PayPal\Api\Agreement();
         try {
