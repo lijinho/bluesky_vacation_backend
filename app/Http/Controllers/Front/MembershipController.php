@@ -32,13 +32,13 @@ class MembershipController extends Controller
     //
     public function __construct()
     {
-    /** PayPal api context **/
-            $paypal_conf = \Config::get('paypal');
-            $this->apiContext = new ApiContext(new OAuthTokenCredential(
-                $paypal_conf['client_id'],
-                $paypal_conf['secret'])
-            );
-            $this->apiContext->setConfig($paypal_conf['settings']);
+        /** PayPal api context **/
+        $paypal_conf = \Config::get('paypal');
+        $this->apiContext = new ApiContext(new OAuthTokenCredential(
+            $paypal_conf['client_id'],
+            $paypal_conf['secret'])
+        );
+        $this->apiContext->setConfig($paypal_conf['settings']);
     }
     public function paypal_createplan(Request $request){
         // var_dump($request->roomId);exit;
@@ -68,6 +68,10 @@ class MembershipController extends Controller
         $request = clone $plan;
         try {
             $output = $plan->create($this->apiContext);
+        } catch (PayPal\Exception\PayPalConnectionException $ex) {
+            echo $ex->getCode();
+            echo $ex->getData();
+            die($ex);
         } catch (Exception $ex) {
             ResultPrinter::printError("Created Plan", "Plan", null, $request, $ex);
             exit(1);

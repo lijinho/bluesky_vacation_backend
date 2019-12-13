@@ -1268,13 +1268,27 @@ class CalendarController extends Controller
         else {
           $bookId = 0;
         }
+        // $reservationModel = new Reservation;
+        // $reservationModel->room_id = $request->id;
+        // $reservationModel->checkin = gmdate("Y-m-d", $start_date);
+        // $reservationModel->checkout = gmdate("Y-m-d", $end_date);
+        // $reservationModel->status = 'Accepted';
+        // $reservationModel->reserveid = $bookId;
+        // $reservationModel->number_of_guests = 1;
+        // $reservationModel->currency_code = 'USD';
+        // $reservationModel->ba_status = 'Confirmed';
+        // $reservationModel->title = $seasonal_name;
+        // $reservationModel->notes = $events[0]['DESCRIPTION'] ?? $events[0]['SUMMARY'];
+        // $reservationModel->save();
+
         $reservationModel = new Reservation;
         $reservationModel->room_id = $request->id;
         $reservationModel->checkin = gmdate("Y-m-d", $start_date);
         $reservationModel->checkout = gmdate("Y-m-d", $end_date);
-        $reservationModel->status = 'Accepted';
-        $reservationModel->reserveid = $bookId;
-        $reservationModel->number_of_guests = 1;
+        $reservationModel->nights = $price;
+        $reservationModel->status = 'New';
+        // $reservationModel->reserveid = $bookId;
+        // $reservationModel->number_of_guests = 1;
         $reservationModel->currency_code = 'USD';
         $reservationModel->ba_status = 'Confirmed';
         $reservationModel->title = $seasonal_name;

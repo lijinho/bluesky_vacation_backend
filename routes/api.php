@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 
 Route::post('/login', 'Api\Auth\LoginController@Login')->name('api.login');
 Route::get('/getOther', 'Api\PostController@getother')->name('api.getOther');
+Route::post('/getMail', 'Api\PostController@sendcontactinformation');
 
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();

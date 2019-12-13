@@ -100,6 +100,7 @@ class ChatsController extends Controller
     }
     public function fileupload(Request $request){
         $file = $request->file('files');
+        // return ['status' => $file];
         $fileName = $file->getClientOriginalName();
         $destinationPath = 'uploads/chats';
         $ext = $file->getClientOriginalExtension();
