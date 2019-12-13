@@ -35,19 +35,13 @@ class BookingHelper
 	public static function isAvailable() 
 	{
 		$currentUser = User::find(Auth::id());
-
-		if ($currentUser->is_bin_enable) {
-			if(empty($currentUser->api_key) || 
-				 empty($currentUser->prop_id) || 
-				 empty($currentUser->ota_password) || 
-				 empty($currentUser->prop_key)){
-				return false;
-			}
-
-			return true;
+		if(empty($currentUser->api_key) || 
+				empty($currentUser->prop_id) || 
+				empty($currentUser->ota_password) || 
+				empty($currentUser->prop_key)){
+			return false;
 		}
-		
-		return false;
+		return true;
 	}
 
 	/**
