@@ -137,7 +137,7 @@
                            </ul>
                            <hr>
                            <div class="text-center">
-                              <a href="/admin/todayreserations" class="small-box-footer">
+                              <a href="/admin/todayreservations" class="small-box-footer ">
                                  More info <i class="icofont icofont-rounded-double-right"></i>
                               </a>
                            </div>
