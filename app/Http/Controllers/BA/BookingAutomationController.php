@@ -30,6 +30,7 @@ class BookingAutomationController extends Controller {
 		$currentUser->prop_key = $request->prop_key;
 		$currentUser->is_bin_enable = $request->is_bin_enable;
 		$currentUser->save();
+		return ['success' => 'true'];
 	}
 
 	public function getPropId() {
