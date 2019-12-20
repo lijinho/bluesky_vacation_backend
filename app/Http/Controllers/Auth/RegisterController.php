@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\User;
+// use App\User;
+use App\Models\Front\User;
 use App\Models\Front\UsersPhoneNumbers;
 use App\Models\Front\ProfilePicture;
 use App\Models\Front\UsersVerification;
@@ -13,7 +14,8 @@ use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Http\Request;
 use App\Notifications\UserRegisteredSuccessfully;
 use  App\Mail\RegisterSuccessNotification;
-use Auth;
+// use Auth;
+use JWTAuth;
 use File;
 use Mail;
 class RegisterController extends Controller
@@ -244,7 +246,7 @@ class RegisterController extends Controller
                 $result = array('success' => false, 'status_message' => 'Failed',"result" => "Failed");
             }
             
-            return response()->json($result);   
+            return response()->json($result);
          }
 
     }
@@ -255,19 +257,32 @@ class RegisterController extends Controller
             $user -> status = 'Active';
             $user -> save();
             if (!$user) {
-                return "The code does not exist for any user in our system.";
+                // return "The code does not exist for any user in our system.";
+                return response()->json([
+                    'success' => false,
+                    'msg' => 'The code does not exist for any user in our system.'
+                ], 200);
             }
             $user_verification = UsersVerification::find($id)      ;
             $user_verification->email = 'yes';
             $user_verification->save();
 
+            $jwt_token = auth()->login($user);
+            
+            return response()->json([
+                'success' => true,
+                'token' => $jwt_token,
+                'userinfo' => $user
+            ]);
 
-            auth()->login($user);
         } catch (\Exception $exception) {
             logger()->error($exception);
-            return "Whoops! something went wrong.";
+            return response()->json([
+                'success' => false,
+                'err' => $exception,
+                'msg' => 'Whoops! something went wrong.'
+            ], 200);
         }
-        return redirect()->to('/');
     }
 
 }

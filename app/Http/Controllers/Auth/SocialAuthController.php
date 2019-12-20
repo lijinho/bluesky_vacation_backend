@@ -200,7 +200,7 @@ class SocialAuthController extends Controller
      */
     public function redirectToProvider($provider, Request $request)
     {
-        
+        return ['status' => $provider];
         return Socialite::driver($provider)->redirect();
     }
 

@@ -45,12 +45,14 @@ class ForgotPasswordController extends Controller
         }
         if ($request->ajax()) {
             if($auth){
-				
-				$user = User::where('email', $request->email)->first();
+                
+                $user = User::where('email', $request->email)->first();
 				$password = $this->randomPassword();
 				
 				$user->password = bcrypt($password);
-				$user->save();
+                $user->save();
+                
+                return ['status' => $user];
 				
 				Mail::to($user->email)->send(new ForgotPasswordSuccessNotification($user, $password));
 				//Mail::to('iamirfanwebdeveloper@gmail.com')->send(new ForgotPasswordSuccessNotification($user, $password));
@@ -58,14 +60,14 @@ class ForgotPasswordController extends Controller
                 
 				return response()->json([
                     'success' => $auth
-				]);
+                    ]);
             }
             else{
+                    // return ['status'=> $request->ajax()];
                 return response()->json([
                     'success' => $auth 
                 ]);
             }
-           
         } else {
            
         }

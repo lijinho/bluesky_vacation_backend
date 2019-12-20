@@ -50,7 +50,7 @@ class UserRegisteredSuccessfully extends Notification
         ->subject('Successfully created new account')
         ->greeting(sprintf('Hello %s', $user->name))
         ->line('You have successfully registered to our system. Please activate your account.')
-        ->action('Click Here', url("/verify-user/$user->id"))
+        ->action('Click Here', url("https://bluesky.vacation.rentals/verify-user/$user->id"))
         ->line('Thank you for using our application!');
     }
     /**

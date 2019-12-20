@@ -1034,8 +1034,9 @@ class ManageListingController extends Controller
 
 		$price->save();
 
-		$this->update_status($request->room_id);
-
+        $this->update_status($request->room_id);
+    
+        return ['status' => 'Heelo'];
 
 		return json_encode(['success'=>'true', 'currency_symbol' => $price->currency->original_symbol, 'steps_count' => $price->steps_count,'night_price'=>$night_price]);
     }

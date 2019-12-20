@@ -18,6 +18,13 @@ Route::post('/login', 'Api\Auth\LoginController@Login')->name('api.login');
 Route::get('/getOther', 'Api\PostController@getother')->name('api.getOther');
 Route::post('/getMail', 'Api\PostController@sendcontactinformation');
 
+Route::get('/users/signup_social', 'Auth\SocialAuthController@signup_social')->name('social.signup_social');
+// UserController@create_social
+Route::get('/login/{provider}', 'Auth\SocialAuthController@redirectToProvider')->name('social.login');
+Route::get('/login/{provider}/callback', 'Auth\SocialAuthController@handleProviderCallback')->name('social.callback');
+ 
+Route::get('/users/signup_social', 'Auth\SocialAuthController@signup_social')->name('social.signup_social');
+
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 })->name('api.getuser');
@@ -228,4 +235,49 @@ Route::group(['name' => 'bookingautomation'], function () {
     Route::get('/ba/api/get_baroomid', 'BA\BookingAutomationController@getBaRoomId');
     Route::get('/ba/api/get_bookings', 'BA\BookingAutomationController@getBookings');
   });
+});
+
+// ================= Email Feedback ======================
+Route::get('/verify-user/{id}', 'Auth\RegisterController@activateUser')->name('activate.user');
+
+// ================== Others =============================
+Route::get('/ImageFix/{from}/{to}', function($from, $to){
+  $photos = App\Models\Front\RoomsPhotos::where('name' ,'like' ,'% %')->where('room_id' ,'>=' ,$from)->where('room_id' ,'<=' ,$to)->get()->pluck('id')->toArray();
+  return view('imagefix',compact('photos'));
+});
+Route::get('/allImageUpload', function(){
+  $photos = App\Models\Front\RoomsPhotos::where('storage', 'local')->where('room_id' ,'<' ,10300)->get()->pluck('id')->toArray();
+  return view('imageupload',compact('photos'));
+});
+Route::get('/allImageUpload/{from}/{to}', function($from, $to){
+  $photos = App\Models\Front\RoomsPhotos::where('storage', 'local')->where('room_id' ,'>=' ,$from)->where('room_id' ,'<=' ,$to)->get()->pluck('id')->toArray();
+  return view('imageupload',compact('photos'));
+});
+Route::post('/ImageUploadToCloudinary', 'UploadController@allImageUpload');
+Route::post('/ImageFix', 'UploadController@ImageFix');
+Route::get('/configtesting',function(){
+  return "Testing";
+});
+
+Route::get('/images/users/{user_id}/{file_name}', function($user_id, $file_name){
+  $path = public_path('') . '/images/users/'.$user_id.'/' . $file_name;
+  if(!File::exists($path)) {
+      $user = App\Models\Front\User::find($user_id);
+      if($user->gender == 'Male'){
+          // $path = '/user_pic-225x225.png';
+      }
+      else{
+          // $path = 'https://images.vexels.com/media/users/3/129677/isolated/preview/cad2cddbbee48118f17cf866279ccfd4-businesswoman-avatar-silhouette-by-vexels.png';
+      }
+      $path = public_path('') . '/images/user_pic-225x225.png';
+      // $path = 'https://ui-avatars.com/api/?name=' . $user->full_name;
+  }
+
+  $file = File::get($path);
+  $type = File::mimeType($path);
+
+  $response = Response::make($file, 200);
+  $response->header("Content-Type", $type);
+
+  return $response; // return 'http://www.ihps.si/wp-content/themes/ihps/images/my-placeholder.png';
 });
