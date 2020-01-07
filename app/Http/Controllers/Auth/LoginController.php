@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Models\Front\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
@@ -45,7 +46,6 @@ class LoginController extends Controller
         $credentials = $request->json()->all();
 
         $jwt_token = null;
-
         if (!($jwt_token = auth()->attempt($credentials))) {
             return response()->json([
                 'success' => false,
@@ -54,12 +54,42 @@ class LoginController extends Controller
         }
 
         $user = auth()->user();
-
         return response()->json([
             'success' => true,
             'token' => $jwt_token,
             'userinfo' => $user
         ]);
+    }
+    protected function LoginSocial(Request $request)
+    {
+        $auth = false;
+        $credentials = $request->json()->all();
+
+        $jwt_token = null;
+
+        if (!($jwt_token = $credentials['token'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid Email or Password',
+            ], 401);
+        }
+
+        $user = auth()->user();
+        
+        return response()->json([
+            'success' => true,
+            'token' => $jwt_token,
+            'userinfo' => $user
+        ]);
+
+    }
+    
+    protected function verifyUser(Request $request)
+    {
+        $credentials = $request->json()->all();
+        $user=User::where('email',$credentials['email'])->update(['status'=>'active']);
+        return response()->json([
+            'success' => true]);
     }
 
     /**

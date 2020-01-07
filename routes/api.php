@@ -60,6 +60,8 @@ Route::group(['middleware' => 'api_key'], function () {
 /* No need API key */
 Route::post('/ajax/login', 'Auth\LoginController@Login');
 Route::post('/ajax/forgot-password', 'Auth\ForgotPasswordController@forgotPassword');
+Route::Post('/ajax/loginsocial','Auth\LoginController@LoginSocial');
+Route::Post('/ajax/verifyuser','Auth\LoginController@verifyUser');
 Route::post('/ajax/signup', 'Auth\RegisterController@register');
 Route::post('/ajax/signupSocial', 'Auth\RegisterController@signupSocial');
 Route::post('/ajax/helpSearch', 'Front\Help\HelpController@searchHelp');

@@ -14,6 +14,7 @@ use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Http\Request;
 use App\Notifications\UserRegisteredSuccessfully;
 use  App\Mail\RegisterSuccessNotification;
+use App\Mail\EmailVerification;
 // use Auth;
 use JWTAuth;
 use File;
@@ -133,8 +134,9 @@ class RegisterController extends Controller
             $user_verification->user_id =   $user_id;
             $user_verification->save(); 
             // 
-            Mail::to($user->email)->send(new RegisterSuccessNotification($user));
-            $result = array('success' => true, 'status_message' => 'Success',"result" => "Success");
+            Mail::to($user->email)->queue(new EmailVerification($user));
+            // Mail::to($user->email)->send(new RegisterSuccessNotification($user));
+            $result = array('success' => true, 'status_message' => 'Success',"result" => "Success",'email'=>$user->email);
             
             return response()->json($result);
          }
