@@ -94,6 +94,7 @@ class RegisterController extends Controller
             "user_type" => 'required|string|max:255' 
             
         ]);
+         $email_code=rand(100000,1000000);
          if($validator->fails()){
             return $validator->errors();
          }
@@ -105,7 +106,8 @@ class RegisterController extends Controller
                 'password' => bcrypt($request->password),
                 'email' => $request->email,
                 'dob' => $request->birthday_year.'-'.$request->birthday_month.'-'.$request->birthday_day,
-                'user_type' => $request->user_type
+                'user_type' => $request->user_type,
+                'email_code'=>$email_code
              );
             $user = User::create($data);
             $user_id = $user->id;

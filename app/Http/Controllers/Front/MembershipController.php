@@ -220,7 +220,7 @@ class MembershipController extends Controller
         ]);
     }
     public function gettypes(){
-        return redirect()->to('/');
+        //return redirect()->to('/');
         if(Auth::user()){
             $user = User::find(Auth::user()->id);
         }

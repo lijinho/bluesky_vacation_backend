@@ -106,6 +106,12 @@ Route::prefix('admin')->group(function () {
     Route::match(array('GET', 'POST'), '/add_admin_role', 'Admin\AdminusersController@addRole');
     Route::match(array('GET', 'POST'), '/edit_admin_role/{id}', 'Admin\AdminusersController@updateRole')->where('id', '[0-9]+');
     Route::post('/delete_admin_role', 'Admin\AdminusersController@deleteRole');
+	
+    //=============== PricingPageRoute ========================	
+	Route::get('/ajax/membershiptypes', 'Front\MembershipController@gettypes');
+	Route::get('/ajax/membershiptype/{planId}', 'Front\MembershipController@gettype');
+	Route::post('/ajax/membership/stripe', 'Front\MembershipController@stripe');
+	Route::post('/ajax/membership/braintree_token', 'Front\MembershipController@Braintree_token');
 
     /* Users  Management Routes */
     Route::get('/users', 'Admin\UsersController@users')->name('admin.users');
