@@ -2,7 +2,7 @@
 
 /database/migrations/vacati60_main.sql
 #/public
-/vendor
+vendor
 .env
 *.bak
 
