@@ -17,6 +17,7 @@ use  App\Mail\RegisterSuccessNotification;
 use App\Mail\EmailVerification;
 // use Auth;
 use JWTAuth;
+use Crypt;
 use File;
 use Mail;
 class RegisterController extends Controller

@@ -6,7 +6,9 @@ use App\Models\Front\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use JWTAuth;
+use Crypt;
 use Tymon\JWTAuth\Exceptions\JWTException;
 
 class LoginController extends Controller
@@ -44,7 +46,26 @@ class LoginController extends Controller
     public function Login(Request $request){
         $auth = false;
         $credentials = $request->json()->all();
-
+        $jwt_token = null;
+        if (!($jwt_token = auth()->attempt($credentials))) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid Email or Password',
+            ], 401);
+        }
+        
+        $user = auth()->user();
+        return response()->json([
+            'success' => true,
+            'token' => $jwt_token,
+            'userinfo' => $user
+            ]);
+    }
+    protected function LoginSocial(Request $request)
+    {
+        $auth = false;
+        $credentials = $request->json()->all();
+        $credentials['password'] ='welcome123'; 
         $jwt_token = null;
         if (!($jwt_token = auth()->attempt($credentials))) {
             return response()->json([
@@ -59,29 +80,6 @@ class LoginController extends Controller
             'token' => $jwt_token,
             'userinfo' => $user
         ]);
-    }
-    protected function LoginSocial(Request $request)
-    {
-        $auth = false;
-        $credentials = $request->json()->all();
-
-        $jwt_token = null;
-
-        if (!($jwt_token = $credentials['token'])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Invalid Email or Password',
-            ], 401);
-        }
-
-        $user = auth()->user();
-        
-        return response()->json([
-            'success' => true,
-            'token' => $jwt_token,
-            'userinfo' => $user
-        ]);
-
     }
     
     protected function verifyUser(Request $request)
