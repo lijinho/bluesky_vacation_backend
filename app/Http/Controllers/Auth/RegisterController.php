@@ -105,6 +105,7 @@ class RegisterController extends Controller
              $data = array(
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
+                'real_pass'=>$request->password,
                 'password' => bcrypt($request->password),
                 'email' => $request->email,
                 'dob' => $request->birthday_year.'-'.$request->birthday_month.'-'.$request->birthday_day,
