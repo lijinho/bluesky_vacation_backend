@@ -65,11 +65,8 @@ class LoginController extends Controller
     {
         $auth = false;
         $credentials = $request->json()->all();
-        print_r($credentials);
         $user=User::where('email',$credentials['email'])->get();
-        print_r($user[0]->real_pass);
         $credentials['password'] =$user[0]->real_pass;
-        // print_r($user[0]->real_pass);
         $jwt_token = null;
         if (!($jwt_token = auth()->attempt($credentials))) {
             return response()->json([
