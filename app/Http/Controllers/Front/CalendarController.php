@@ -1408,17 +1408,15 @@ class CalendarController extends Controller
     //   }
 
     // }
-
-      
     $conflict = Reservation::where('room_id', $room_id)
           ->where('id', '<>', $reservation_id)
           ->where('checkin', '<=', $checkin)
           ->where('checkout', '>', $checkin)
           ->where('status', '<>', 'Cancelled')
           ->get()->toArray();
-    
-    if(isset($conflict) && count($conflict)>0) return false; 
-  
+
+    if(isset($conflict) && count($conflict)>0) return false;
+
     $conflict = Reservation::where('room_id', $room_id)
           ->where('id', '<>', $reservation_id)
           ->where('checkin', '<', $checkout)
@@ -1426,8 +1424,7 @@ class CalendarController extends Controller
           ->where('status', '<>', 'Cancelled')
           ->get()->toArray();
 
-
-    if(isset($conflict) && count($conflict)>0) return false; 
+    if(isset($conflict) && count($conflict)>0) return false;
 
     $conflict = Reservation::where('room_id', $room_id)
       ->where('id', '<>', $reservation_id)
@@ -1436,7 +1433,7 @@ class CalendarController extends Controller
       ->where('status', '<>', 'Cancelled')
       ->get()->toArray();
 
-    if(isset($conflict) && count($conflict)>0) return false; 
+    if(isset($conflict) && count($conflict)>0) return false;
 
     return true;
   }
@@ -1962,7 +1959,6 @@ class CalendarController extends Controller
 	 * @throws \Exception
 	 */
 	public function save_reservation(Request $request) {
-    
     $rules  = [
       'start_date'   => 'required|date',
       'end_date'   => 'required|date',
@@ -1997,6 +1993,7 @@ class CalendarController extends Controller
     
     // dd($request->id,$request->edit_seasonal_name, $checkin, $checkout);
      //dd($this->check_reservation_conflict($request->id, $checkin, $checkout, $request->edit_seasonal_name));
+
     if($this->check_reservation_conflict($request->id, $request->reservation_id, $checkin, $checkout, $request->edit_seasonal_name) != true) {      
       $errors = ['start_date' => [ 0 => 'Sorry,there is a conflict'], 'end_date' => [ 0 => 'Sorry,there is a conflict']];  
       return json_encode(['success' => 'false', 'validator' => 'true', 'errors' => $errors]);
@@ -2017,6 +2014,7 @@ class CalendarController extends Controller
 
     $cnt = count($days)-1;
     $lastNight = gmdate("Y-m-d", strtotime("-1 day", strtotime($checkout)));
+
 
     $ba_roomid = Rooms::find($request->id)->ba_roomid;
 
@@ -2047,10 +2045,8 @@ class CalendarController extends Controller
       if(isset($reserveid) && $reserveid>0) {
         $reservation_json['bookId'] = $reserveid;      
       }
-
       $result = BookingHelper::setBooking($reservation_json);
-
-      if(isset($result['success']) == false) {      
+      if(isset($result['success']) == false) {
         $errors = ['start_date' => [ 0 => 'Sorry,there is a conflict'], 'end_date' => [ 0 => 'Sorry,there is a conflict']];  
         return json_encode(['success' => 'false', 'validator' => '123', 'errors' => $errors]);
       }
