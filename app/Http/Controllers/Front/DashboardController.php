@@ -84,7 +84,7 @@ class DashboardController extends Controller
 			$query->with('profile_picture');
 		}])->with('rooms_address')->where('read',0)->orderBy('id','desc')->get();
 
-		$data['profile_pic'] = $logedInUser->profile_picture->src;
+		$data['profile_pic'] = $logedInUser->profile_picture ? $logedInUser->profile_picture->src : null;
 		$listed = Rooms::where('user_id','=', Auth::user()->id)->where('status','=','Listed');
 		$data['option'] = $listed->count() ? 'hosted_dashboard' : 'guest_dashboard';
 		if($listed->count() > 0){
