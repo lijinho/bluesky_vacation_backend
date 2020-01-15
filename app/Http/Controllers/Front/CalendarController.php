@@ -2050,12 +2050,12 @@ class CalendarController extends Controller
 
       $result = BookingHelper::setBooking($reservation_json);
 
-      if(isset($result['success']) == false) {      
-        $errors = ['start_date' => [ 0 => 'Sorry,there is a conflict'], 'end_date' => [ 0 => 'Sorry,there is a conflict']];  
-        return json_encode(['success' => 'false', 'validator' => '123', 'errors' => $errors]);
-      }
+      // if(isset($result['success']) == false) {      
+      //   $errors = ['start_date' => [ 0 => 'Sorry,there is a conflict'], 'end_date' => [ 0 => 'Sorry,there is a conflict']];  
+      //   return json_encode(['success' => 'false', 'validator' => '123', 'errors' => $errors]);
+      // }
 
-      if($reserveid==0) $reserveid = $result['bookId'];
+      if($reserveid==0 && isset($result['bookId'])) $reserveid = $result['bookId'];
     }
 
     $source = $request->reservation_source;    
