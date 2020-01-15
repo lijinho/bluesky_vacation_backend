@@ -1983,7 +1983,7 @@ class CalendarController extends Controller
             'first_name' => 'required',
             'last_name' => 'required',
             'street_address_1' => 'required|max:255',
-            'street_address_2' => 'required|max:255',
+            'street_address_2' => 'max:255',
             'city' => 'required|max:255',
             'state' => 'max:255',
             'postal_code' => 'max:255',
