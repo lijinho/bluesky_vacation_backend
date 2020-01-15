@@ -73,6 +73,12 @@ use Log;
  * @property string $last_name
  * @property string $postal_code
  * @property string $country
+ * @property string $street_address_1
+ * @property string $street_address_2
+ * @property string $city
+ * @property string $state
+ * @property string $phone_number
+ * @property string $email
  * @property string|null $status
  * @property string|null $type
  * @property string $friends_email
@@ -246,7 +252,8 @@ class Reservation extends Model
 	 */
 	protected $table = 'reservation';
 
-	protected $fillable = ['ba_status', 'status', 'currency_code', 'id', 'nights', 'title', 'notes', 'id', 'reserveid', 'checkin','checkout','code', 'room_id', 'start_time', 'end_time', 'number_of_guests', 'nights', 'per_night', 'subtotal', 'cleaning', 'additional_guest', 'security', 'service', 'host_fee', 'total','coupon_code', 'coupon_amount', 'base_per_night'];
+	protected $fillable = ['ba_status', 'status', 'currency_code', 'id', 'nights', 'title', 'notes', 'id', 'reserveid', 'checkin','checkout','code', 'room_id', 'start_time', 'end_time', 'number_of_guests', 'nights', 'per_night', 'subtotal', 'cleaning', 'additional_guest', 'security', 'service', 'host_fee', 'total','coupon_code', 'coupon_amount', 'base_per_night',
+        'first_name', 'last_name', 'postal_code', 'street_address_1', 'street_address_2', 'city', 'state', 'phone_number', 'email'];
 	protected $appends = ['created_at_timer','status_color','receipt_date', 'dates_subject', 'checkin_arrive', 'checkout_depart', 'guests', 'host_payout', 'guest_payout', 'admin_host_payout', 'admin_guest_payout', 'checkin_md', 'checkout_md', 'checkin_mdy', 'checkout_mdy','check_total', 'checkin_site_date_format', 'checkout_site_date_format', 'review_end_date','grand_total','room_category','avablity','checkinformatted','checkoutformatted','status_language','review_link','original_created_at', 'guests_text','address_url','total_additional_charge'];
 
 	// Check reservation table user_id is equal to current logged in user id
