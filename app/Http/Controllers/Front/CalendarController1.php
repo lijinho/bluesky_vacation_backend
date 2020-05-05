@@ -907,20 +907,18 @@ class CalendarController extends Controller
         if ($request->reservation_id > 0 && $request->reserveid > 0) {
             if (BookingHelper::isAvailable()) {
                 $ba_roomid = Rooms::find($request->id)->ba_roomid;
-                if ($ba_roomid) {
-                    $reservation_json = [
-                        "roomId" => $ba_roomid,
-                        "status" => "0",
-                        "bookId" => $request->reserveid
-                    ];
-                    $result = BookingHelper::setBooking($reservation_json);
 
-                    if (isset($result['success']) == false) {
-                        $errors = ['start_date' => [0 => 'Sorry,there is a BA error'], 'end_date' => [0 => 'Sorry,there is a conflict'], 'reason' => 'Ba api call failed'];
-                        return json_encode(['success' => 'false', 'validator' => 'fail', 'errors' => $errors]);
-                    }
+                $reservation_json = [
+                    "roomId" => $ba_roomid,
+                    "status" => "0",
+                    "bookId" => $request->reserveid
+                ];
+                $result = BookingHelper::setBooking($reservation_json);
+
+                if (isset($result['success']) == false) {
+                    $errors = ['start_date' => [0 => 'Sorry,there is a BA error'], 'end_date' => [0 => 'Sorry,there is a conflict']];
+                    return json_encode(['success' => 'false', 'validator' => 'fail', 'errors' => $errors]);
                 }
-
             }
 
             $reservationModel = Reservation::find($request->reservation_id);
@@ -1032,18 +1030,16 @@ class CalendarController extends Controller
                 if (BookingHelper::isAvailable()) {
                     $ba_roomid = Rooms::find($request->id)->ba_roomid;
 
-                    if ($ba_roomid) {
-                        $reservation_json = [
-                            "roomId" => $ba_roomid,
-                            "status" => "0",
-                            "bookId" => $request->reserveid
-                        ];
-                        $result = BookingHelper::setBooking($reservation_json);
+                    $reservation_json = [
+                        "roomId" => $ba_roomid,
+                        "status" => "0",
+                        "bookId" => $request->reserveid
+                    ];
+                    $result = BookingHelper::setBooking($reservation_json);
 
-                        if (isset($result['success']) == false) {
-                            $errors = ['start_date' => [0 => 'Sorry,there is a BA error'], 'end_date' => [0 => 'Sorry,there is a conflict']];
-                            return json_encode(['success' => false, 'validator' => 'fail', 'errors' => $errors]);
-                        }
+                    if (isset($result['success']) == false) {
+                        $errors = ['start_date' => [0 => 'Sorry,there is a BA error'], 'end_date' => [0 => 'Sorry,there is a conflict']];
+                        return json_encode(['success' => false, 'validator' => 'fail', 'errors' => $errors]);
                     }
                 }
 
@@ -1252,34 +1248,32 @@ class CalendarController extends Controller
                 if (BookingHelper::isAvailable()) {
                     $ba_roomid = Rooms::find($request->id)->ba_roomid;
 
-                    if ($ba_roomid) {
-                        $reservation_json = [
-                            "roomId" => $ba_roomid,
-                            "status" => "1",
-                            "unitId" => "1",
-                            "roomQty" => "1",
-                            "firstNight" => $checkin,
-                            "lastNight" => $lastNight,
-                            "guestFirstName" => $seasonal_name,
-                            "deposit" => "10.00",
-                            "numAdult" => 1,
-                            "tax" => "5.00",
-                            "commission" => "15.00",
-                            "refererEditable" => "online",
-                            "notifyUrl" => "true",
-                            "notifyGuest" => false,
-                            "notifyHost" => false,
-                            "assignBooking" => false,
-                            'checkAvailability' => false,
-                            'allowReview' => true,
-                        ];
+                    $reservation_json = [
+                        "roomId" => $ba_roomid,
+                        "status" => "1",
+                        "unitId" => "1",
+                        "roomQty" => "1",
+                        "firstNight" => $checkin,
+                        "lastNight" => $lastNight,
+                        "guestFirstName" => $seasonal_name,
+                        "deposit" => "10.00",
+                        "numAdult" => 1,
+                        "tax" => "5.00",
+                        "commission" => "15.00",
+                        "refererEditable" => "online",
+                        "notifyUrl" => "true",
+                        "notifyGuest" => false,
+                        "notifyHost" => false,
+                        "assignBooking" => false,
+                        'checkAvailability' => false,
+                        'allowReview' => true,
+                    ];
 
-                        $result = BookingHelper::setBooking($reservation_json);
+                    $result = BookingHelper::setBooking($reservation_json);
 
-                        $bookId = 0;
-                        if (isset($result['bookId']) == true) {
-                            $bookId = $result['bookId'];
-                        }
+                    $bookId = 0;
+                    if (isset($result['bookId']) == true) {
+                        $bookId = $result['bookId'];
                     }
                 } else {
                     $bookId = 0;
@@ -1504,7 +1498,7 @@ class CalendarController extends Controller
     {
         $data = $request->data;
         if ($this->check_seasonal_conflict($data) != true) {
-            $errors = ['start_date' => [0 => 'Sorry,there is a conflict'], 'end_date' => [0 => 'Sorry,there is a conflict'], 'reason' => 'seasonal conflict'];
+            $errors = ['start_date' => [0 => 'Sorry,there is a conflict'], 'end_date' => [0 => 'Sorry,there is a conflict']];
             return json_encode(['success' => 'false', 'validator' => 'fail', 'errors' => $errors]);
         }
     }
@@ -1555,7 +1549,7 @@ class CalendarController extends Controller
         }
 
         if ($this->check_seasonal_conflict($data) != true) {
-            $errors = ['start_date' => [0 => 'Sorry,there is a conflict'], 'end_date' => [0 => 'Sorry,there is a conflict'], 'reason' => 'seasonal conflict'];
+            $errors = ['start_date' => [0 => 'Sorry,there is a conflict'], 'end_date' => [0 => 'Sorry,there is a conflict']];
             return json_encode(['success' => 'false', 'validator' => 'fail', 'errors' => $errors]);
         }
         // end validation
@@ -1637,7 +1631,7 @@ class CalendarController extends Controller
             "extraPersonPriceEnable" => @$data->additional_guest ? '1' : '0'
         ];
 
-        if (BookingHelper::isAvailable() && $ba_roomid) {
+        if (BookingHelper::isAvailable()) {
             if ($rateId > 0) {
                 $rateData['rateId'] = $rateId;
                 $result = BookingHelper::setRate($rateData);
@@ -1777,7 +1771,7 @@ class CalendarController extends Controller
     {
         $data = $request->data;
         if ($this->check_unavailable_conflict($data) != true) {
-            $errors = ['start_date' => [0 => 'Sorry,there is a conflict'], 'end_date' => [0 => 'Sorry,there is a conflict'], 'reason' => 'unavailable conflict'];
+            $errors = ['start_date' => [0 => 'Sorry,there is a conflict'], 'end_date' => [0 => 'Sorry,there is a conflict']];
             return json_encode(['success' => 'false', 'validator' => 'fail', 'errors' => $errors]);
         }
     }
@@ -1819,7 +1813,7 @@ class CalendarController extends Controller
 
         if ($this->check_unavailable_conflict($data) != true) {
 
-            $errors = ['start_date' => [0 => 'Sorry,there is a conflict'], 'end_date' => [0 => 'Sorry,there is a conflict'], 'unavailable conflict'];
+            $errors = ['start_date' => [0 => 'Sorry,there is a conflict'], 'end_date' => [0 => 'Sorry,there is a conflict']];
             return json_encode(['success' => 'false', 'validator' => 'fail', 'errors' => $errors]);
         }
 
@@ -1838,7 +1832,7 @@ class CalendarController extends Controller
 
         if (isset($reserveid) == false || $reserveid == null) $reserveid = 0;
 
-        if (BookingHelper::isAvailable() && $ba_roomid) {
+        if (BookingHelper::isAvailable()) {
             $reservation_json = [
                 "roomId" => $ba_roomid,
                 "status" => "4",
@@ -1854,10 +1848,76 @@ class CalendarController extends Controller
 
             $result = BookingHelper::setBooking($reservation_json);
 
-            if (isset($result['success']) == false) {
-                $errors = ['start_date' => [0 => 'Sorry,there is a BA error'], 'end_date' => [0 => 'Sorry,there is a conflict'], 'reason' => 'Ba api call failed'];
-                return json_encode(['success' => 'false', 'validator' => 'fail', 'errors' => $errors]);
-            }
+    // $start_date = date("Y-m-d", strtotime($request->start_date));
+    
+    // $checkin =  date('Y-m-d',$this->helper->custom_strtotime($request->start_date));
+    $checkin =  $request->start_date;
+   
+    // $checkout =  date('Y-m-d',$this->helper->custom_strtotime($request->end_date));
+    $checkout =  $request->end_date;
+    
+    // dd($request->id,$request->edit_seasonal_name, $checkin, $checkout);
+     //dd($this->check_reservation_conflict($request->id, $checkin, $checkout, $request->edit_seasonal_name));
+    if($this->check_reservation_conflict($request->id, $request->reservation_id, $checkin, $checkout, $request->edit_seasonal_name) != true) {      
+      $errors = ['start_date' => [ 0 => 'Sorry,there is a conflict'], 'end_date' => [ 0 => 'Sorry,there is a conflict']];  
+      return json_encode(['success' => 'false', 'validator' => 'true', 'errors' => $errors]);
+    }
+   
+    // end validation
+
+    $reserveid = $request->reserveid;
+    if($reserveid == null || $reserveid == '') $reserveid = 0;
+
+    $notes = "";
+    if($request->notes == null) $notes = "";
+    else $notes = $request->notes;
+
+    $reservation_id = $request->reservation_id;
+
+    $days = $this->get_days(strtotime($checkin),strtotime($checkout));
+
+    $cnt = count($days)-1;
+    $lastNight = gmdate("Y-m-d", strtotime("-1 day", strtotime($checkout)));
+
+    $ba_roomid = Rooms::find($request->id)->ba_roomid;
+
+    $total_price = $cnt*$request->price;
+
+    if (BookingHelper::isAvailable()) {
+      $reservation_json =[
+        "roomId" => $ba_roomid,
+        "status" =>  "1",
+        "unitId" =>  "1",
+        "roomQty" =>  "1",
+        "firstNight" => $checkin,
+        "lastNight" => $lastNight,
+        "numAdult" => $request->guests,
+        "guestFirstName" => $request->seasonal_name,
+        "price" => $total_price,
+        "deposit" => "10.00",
+        "tax" => "5.00",
+        "commission" => "15.00",
+        "refererEditable" => "online",
+        "notifyUrl" => "true",
+        "notifyGuest" => false,
+        "notifyHost" => false,
+        "assignBooking" => false,
+        'checkAvailability' => false,
+        'allowReview' => true,
+      ];
+      if(isset($reserveid) && $reserveid>0) {
+        $reservation_json['bookId'] = $reserveid;      
+      }
+
+      $result = BookingHelper::setBooking($reservation_json);
+
+      // if(isset($result['success']) == false) {      
+      //   $errors = ['start_date' => [ 0 => 'Sorry,there is a conflict'], 'end_date' => [ 0 => 'Sorry,there is a conflict']];  
+      //   return json_encode(['success' => 'false', 'validator' => '123', 'errors' => $errors]);
+      // }
+
+      if($reserveid==0 && isset($result['bookId'])) $reserveid = $result['bookId'];
+    }
 
             if ($reserveid == 0) $reserveid = $result['bookId'];
         }
@@ -1947,7 +2007,7 @@ class CalendarController extends Controller
         $checkin = date('Y-m-d', $this->helper->custom_strtotime($request->start_date));
         $checkout = date('Y-m-d', $this->helper->custom_strtotime($request->end_date));
         if ($this->check_reservation_conflict($request->id, $request->reservation_id, $checkin, $checkout, $request->edit_seasonal_name) != true) {
-            $errors = ['start_date' => [0 => 'Sorry,there is a conflict'], 'end_date' => [0 => 'Sorry,there is a conflict'], 'reason' => 'reservation conflict'];
+            $errors = ['start_date' => [0 => 'Sorry,there is a conflict'], 'end_date' => [0 => 'Sorry,there is a conflict']];
             return json_encode(['success' => 'false', 'validator' => 'fail', 'errors' => $errors]);
         }
     }
@@ -1979,7 +2039,7 @@ class CalendarController extends Controller
 //            print_r($request[$key]);
 //            print("\n");
 //        }
-
+        
         $rules = [
             'start_date' => 'required|date',
             'end_date' => 'required|date',
@@ -2006,7 +2066,7 @@ class CalendarController extends Controller
         ];
 
         $validator = Validator::make($request->all(), $rules, [], $attributes);
-
+        
         if ($validator->fails()) {
             $errors = @$validator->errors()->getMessages();
             return json_encode(['success' => 'false', 'validator' => 'fail', 'errors' => $errors]);
@@ -2025,7 +2085,7 @@ class CalendarController extends Controller
         //dd($this->check_reservation_conflict($request->id, $checkin, $checkout, $request->edit_seasonal_name));
 
         if ($this->check_reservation_conflict($request->id, $request->reservation_id, $checkin, $checkout, $request->edit_seasonal_name) != true) {
-            $errors = ['start_date' => [0 => 'Sorry,there is a conflict'], 'end_date' => [0 => 'Sorry,there is a conflict'], 'reason' => 'check reservation conflict'];
+            $errors = ['start_date' => [0 => 'Sorry,there is a conflict'], 'end_date' => [0 => 'Sorry,there is a conflict'], 'meta' => 'check reservation conflict'];
             return json_encode(['success' => 'false', 'validator' => 'true', 'errors' => $errors]);
         }
         // end validation
@@ -2048,8 +2108,8 @@ class CalendarController extends Controller
         $ba_roomid = Rooms::find($request->id)->ba_roomid;
 
         $total_price = $cnt * $request->price;
-
-        if (BookingHelper::isAvailable() && $ba_roomid) {
+        
+        if (BookingHelper::isAvailable()) {
             $reservation_json = [
                 "roomId" => $ba_roomid,
                 "status" => "1",
@@ -2082,9 +2142,9 @@ class CalendarController extends Controller
                 $reservation_json['bookId'] = $reserveid;
             }
             $result = BookingHelper::setBooking($reservation_json);
-
+            
             if (isset($result['success']) == false) {
-                $errors = ['start_date' => [0 => 'Sorry,there is a conflict'], 'end_date' => [0 => 'Sorry,there is a conflict'], 'reason' => 'Ba api call failed'];
+                $errors = ['start_date' => [0 => 'Sorry,there is a conflict'], 'end_date' => [0 => 'Sorry,there is a conflict'], 'meta' => 'Booking API failed'];
                 return json_encode(['success' => 'false', 'validator' => '123', 'errors' => $errors]);
             }
 

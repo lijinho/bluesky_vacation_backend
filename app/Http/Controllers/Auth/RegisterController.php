@@ -136,7 +136,7 @@ class RegisterController extends Controller
             $user_verification->user_id =   $user_id;
             $user_verification->save(); 
             // 
-            Mail::to($user->email)->queue(new EmailVerification($user));
+           Mail::to($user->email)->queue(new EmailVerification($user)); 
             // Mail::to($user->email)->send(new RegisterSuccessNotification($user));
             $result = array('success' => true, 'status_message' => 'Success',"result" => "Success",'email'=>$user->email);
             
